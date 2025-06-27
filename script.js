@@ -6,15 +6,12 @@
 // are included in index.html, and that they expose these global names.
 
 // Access pptx-parser's functions via the global 'pptx-parser' object
-// The UMD build you provided should make the main 'parse' function available
-// as the 'default' export, and 'vf' as a named export on that object.
 const pptxParserGlobal = window['pptx-parser']; // Get the entire object
 const parsePptx = pptxParserGlobal ? pptxParserGlobal.default : null; // Access the 'default' export
 const vfConvert = pptxParserGlobal ? pptxParserGlobal.vf : null; // Access the 'vf' named export
 
-// Hypothetical global names for other libraries.
-// YOU NEED TO VERIFY THESE based on their actual UMD builds.
-const createVF = window.VFLauncher ? window.VFLauncher.createVF : null; // e.g., if VFLauncher exposes createVF
+// CORRECTED: createVF is directly on the window object
+const createVF = window.createVF; // This is the corrected line!
 const tinycolor2 = window.tinycolor; // Common global name for tinycolor2
 
 // Exposing tinycolor2 globally as 'tiny' as per your original snippet
@@ -24,23 +21,28 @@ if (tinycolor2) {
     console.warn("tinycolor2 global not found. 'window.tiny' will not be set.");
 }
 
-
 let playerInstance = null;
 let totalScenes = 0;
 let currentSceneIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
     const fileDlg = document.getElementById('pptxFile');
+    const fileLabel = document.getElementById('fileLabel'); // Get the label element
     const parseButton = document.getElementById('parseButton');
+    const downloadHandoutBtn = document.getElementById('downloadHandoutBtn'); // Get the download button
+    const clearBtn = document.getElementById('clearBtn'); // Get the clear button
     const prevButton = document.getElementById('btn-prev');
     const nextButton = document.getElementById('btn-next');
     const outputDiv = document.getElementById('output');
     const loadingMessage = document.getElementById('loadingMessage');
     const errorMessage = document.getElementById('errorMessage');
-    const vfContainer = document.querySelector('.vf-container');
+    const vfPlayerContainer = document.getElementById('vfPlayerContainer'); // Get the VF player container
+    const processStatus = document.getElementById('process-status');
+    const handoutPlaceholder = document.getElementById('handoutPlaceholder');
 
     fileDlg.onchange = handleFileSelection;
     parseButton.onclick = handleParseClick;
+
     prevButton.onclick = function() {
         if (playerInstance && currentSceneIndex > 0) {
             currentSceneIndex--;
@@ -56,8 +58,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Clear All button functionality
+    clearBtn.onclick = function() {
+        fileDlg.value = null; // Clear the file input
+        fileLabel.classList.remove('has-files'); // Remove visual feedback
+        processStatus.textContent = 'No file selected.';
+        outputDiv.innerHTML = '';
+        handoutPlaceholder.style.display = 'block'; // Show handout placeholder
+        errorMessage.style.display = 'none';
+        loadingMessage.style.display = 'none';
+        parseButton.disabled = true;
+        downloadHandoutBtn.disabled = true;
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+
+        // Clear VF Player
+        if (playerInstance) {
+            playerInstance.dispose(); // Dispose of the VF player instance
+            playerInstance = null;
+        }
+        vfPlayerContainer.innerHTML = '<p>Upload a .pptx file to see the live presentation preview.</p>'; // Reset VF player content
+        totalScenes = 0;
+        currentSceneIndex = 0;
+    };
+
+
     // Initial state setup
     parseButton.disabled = true;
+    downloadHandoutBtn.disabled = true; // Initially disable download
     prevButton.disabled = true;
     nextButton.disabled = true;
 
@@ -65,25 +93,73 @@ document.addEventListener('DOMContentLoaded', () => {
     fileDlg.addEventListener('change', () => {
         if (fileDlg.files.length > 0) {
             parseButton.disabled = false;
+            processStatus.textContent = `File selected: ${fileDlg.files[0].name}`;
+            fileLabel.classList.add('has-files'); // Add visual feedback
             outputDiv.innerHTML = ''; // Clear previous output
+            handoutPlaceholder.style.display = 'block'; // Show handout placeholder initially
             errorMessage.style.display = 'none';
+            loadingMessage.style.display = 'none';
+            // Reset VF Player content when a new file is chosen
+            if (playerInstance) {
+                playerInstance.dispose();
+                playerInstance = null;
+            }
+            vfPlayerContainer.innerHTML = '<p>Upload a .pptx file to see the live presentation preview.</p>';
         } else {
             parseButton.disabled = true;
+            processStatus.textContent = 'No file selected.';
+            fileLabel.classList.remove('has-files'); // Remove visual feedback
+        }
+    });
+
+    // Drag and drop functionality for the file upload area
+    fileLabel.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileLabel.classList.add('border-blue-600', 'bg-blue-50'); // Visual feedback on drag over
+    });
+
+    fileLabel.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileLabel.classList.remove('border-blue-600', 'bg-blue-50'); // Remove feedback on drag leave
+    });
+
+    fileLabel.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileLabel.classList.remove('border-blue-600', 'bg-blue-50');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // Assign the dropped file to the input
+            fileDlg.files = files;
+            // Manually trigger the change event to update UI
+            const event = new Event('change', { bubbles: true });
+            fileDlg.dispatchEvent(event);
         }
     });
 
     // Check if required global libraries are available
-    if (!parsePptx || !vfConvert || !createVF || !tinycolor2) {
+    if (!pptxParserGlobal || !parsePptx || !vfConvert || !createVF || !tinycolor2) {
         errorMessage.textContent = 'Required JavaScript libraries (pptx-parser, @vf.js/launcher, tinycolor2) are not loaded correctly. Please ensure all .min.js files are in the lib/ folder and linked in index.html.';
         errorMessage.style.display = 'block';
+        parseButton.disabled = true;
         console.error('Missing global library functions:', {
-            pptxParserGlobal: !!pptxParserGlobal, // Check the main object
+            pptxParserGlobal: !!pptxParserGlobal,
             parsePptx: !!parsePptx,
             vfConvert: !!vfConvert,
-            createVF: !!createVF,
+            createVF: !!createVF, // This will now correctly reflect if window.createVF exists
             tinycolor2: !!tinycolor2
         });
     }
+
+    // Placeholder for download functionality (you'll implement this)
+    downloadHandoutBtn.addEventListener('click', () => {
+        // Logic to generate and download the HTML handout
+        console.log('Download Handout button clicked!');
+        alert('Download Handout functionality coming soon!');
+    });
 
 });
 
@@ -94,14 +170,18 @@ function handleFileSelection(e) {
 async function handleParseClick() {
     const file = document.getElementById('pptxFile').files[0];
     const parseButton = document.getElementById('parseButton');
+    const downloadHandoutBtn = document.getElementById('downloadHandoutBtn');
     const outputDiv = document.getElementById('output');
     const loadingMessage = document.getElementById('loadingMessage');
     const errorMessage = document.getElementById('errorMessage');
     const prevButton = document.getElementById('btn-prev');
     const nextButton = document.getElementById('btn-next');
-    const vfContainer = document.querySelector('.vf-container');
+    const vfPlayerContainer = document.getElementById('vfPlayerContainer');
+    const handoutPlaceholder = document.getElementById('handoutPlaceholder');
 
-    outputDiv.innerHTML = '';
+
+    outputDiv.innerHTML = ''; // Clear previous output
+    handoutPlaceholder.style.display = 'none'; // Hide placeholder
     errorMessage.style.display = 'none';
 
     if (!file) {
@@ -119,12 +199,19 @@ async function handleParseClick() {
 
     loadingMessage.style.display = 'block';
     parseButton.disabled = true;
+    downloadHandoutBtn.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = true;
 
+    // Dispose existing player if any
+    if (playerInstance) {
+        playerInstance.dispose();
+        playerInstance = null;
+    }
+    vfPlayerContainer.innerHTML = ''; // Clear VF player content area
+
     try {
         console.log("Starting PPTX parsing...");
-        // Use the corrected 'parsePptx' function
         const pptJson = await parsePptx(file, { flattenGroup: true });
         console.log("Parsed PPTX JSON:", pptJson);
 
@@ -137,35 +224,36 @@ async function handleParseClick() {
 
         if (vfConvert) {
             console.log("Converting to VF JSON...");
-            // Use the corrected 'vfConvert' function
             const vfJson = await vfConvert(pptJson, { width, height });
             console.log('VF JSON:', vfJson);
 
             const tmp = new Blob([JSON.stringify(vfJson)], { type: 'application/json' });
 
             const config = {
-                container: vfContainer,
+                container: vfPlayerContainer, // Use the dedicated container
                 debug: true,
                 width,
                 height,
-                resolution: window.devicePixelRatio || 1
+                resolution: window.devicePixelRatio || 1 // Fallback for resolution
             };
             console.log("VF Player Config:", config);
 
             if (createVF) {
-                const v = createVF(config, player => {
+                // The createVF function itself is the global
+                const v = createVF(config, player => { // No longer window.VFLauncher.createVF
                     window.player = playerInstance = player;
-                    window.v = v;
+                    window.v = v; // Store the VF instance globally
 
                     player.onReady = function() {
-                        console.log("VF Player: onReady");
+                        console.log("VF Player: onReady"); // Initialization complete
                         currentSceneIndex = 0;
                         totalScenes = playerInstance.data.scenes.length;
                         if (totalScenes > 0) {
                             prevButton.disabled = false;
                             nextButton.disabled = false;
                         }
-                        displayHandoutContent(playerInstance.data.scenes);
+                        displayHandoutContent(playerInstance.data.scenes, pptJson); // Pass pptJson for notes
+                        downloadHandoutBtn.disabled = false; // Enable download button
                     };
 
                     player.onSceneCreate = function() {
@@ -194,13 +282,15 @@ async function handleParseClick() {
             } else {
                  errorMessage.textContent = 'VF.js launcher (createVF) not found. Cannot render presentation.';
                  errorMessage.style.display = 'block';
-                 console.error('createVF is null. Check @vf.js/launcher.min.js.');
+                 console.error('createVF is null. Check vf-launcher.min.js.');
+                 displayHandoutContentFromPptJson(pptJson); // Still display text handout
             }
         } else {
             errorMessage.textContent = 'PPTX to VF conversion function (vf) not found. Cannot render presentation.';
             errorMessage.style.display = 'block';
             console.error('vfConvert is null. Check pptx-parser.min.js for vf export.');
-            displayHandoutContentFromPptJson(pptJson);
+            displayHandoutContentFromPptJson(pptJson); // Fallback for text-only handout if vf is not available
+            downloadHandoutBtn.disabled = false; // Still allow download for text handout
         }
 
     } catch (e) {
@@ -213,7 +303,8 @@ async function handleParseClick() {
     }
 }
 
-function displayHandoutContent(scenes) {
+// Pass pptJson to this function to access speaker notes
+function displayHandoutContent(scenes, pptJson) {
     const outputDiv = document.getElementById('output');
     outputDiv.innerHTML = '<h2>Handout Content:</h2>';
 
@@ -249,6 +340,18 @@ function displayHandoutContent(scenes) {
         } else {
             const p = document.createElement('p');
             p.textContent = 'No text content directly extractable from VF scene data for this slide.';
+            slideDiv.appendChild(p);
+        }
+
+        // Extract and display speaker notes from the original pptJson
+        const originalSlide = pptJson.slides[index];
+        if (originalSlide && originalSlide.notes && originalSlide.notes.text) {
+            const notesP = document.createElement('p');
+            notesP.innerHTML = `<strong>Speaker Notes:</strong> ${originalSlide.notes.text}`;
+            slideDiv.appendChild(notesP);
+        } else {
+            const p = document.createElement('p');
+            p.textContent = 'No speaker notes found for this slide.';
             slideDiv.appendChild(p);
         }
 

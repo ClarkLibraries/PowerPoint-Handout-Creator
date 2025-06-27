@@ -451,11 +451,11 @@
                 <h2 id="upload-heading" class="visually-hidden">Upload PowerPoint File</h2>
                 
                 <div class="upload-area" 
-                    id="uploadArea" 
-                    tabindex="0" 
-                    role="button" 
-                    aria-describedby="upload-instructions"
-                    aria-label="Upload PowerPoint file">
+                     id="uploadArea" 
+                     tabindex="0" 
+                     role="button" 
+                     aria-describedby="upload-instructions"
+                     aria-label="Upload PowerPoint file">
                     <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
@@ -464,327 +464,15 @@
                         or click to browse (supports .pptx and .ppt files)
                     </div>
                     <input type="file" 
-                               class="file-input" 
-                               id="fileInput" 
-                               accept=".pptx,.ppt"
-                               aria-describedby="upload-instructions">
+                           class="file-input" 
+                           id="fileInput" 
+                           accept=".pptx,.ppt"
+                           aria-describedby="upload-instructions">
                 </div>
                 
                 <div style="text-align: center; margin-top: 24px;">
                     <button class="btn btn-primary" id="uploadBtn" disabled>
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="m7.646 1.146-3 3a.5.5 0 0 0 .708.708L7.5 2.707V11.5a.5.5 0 0 0 1 0V2.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0z"/>
-                        </svg>
-                        Upload & Parse
-                    </button>
-                </div>
-            </section>
-
-            <div class="loading" id="loading" role="status" aria-live="polite">
-                <div class="spinner" aria-hidden="true"></div>
-                <p>Processing your presentation...</p>
-            </div>
-
-            <section class="content-section" id="contentSection" aria-labelledby="editor-heading">
-                <div class="section-header">
-                    <h2 id="editor-heading" class="section-title">Edit Your Presentation</h2>
-                    <button class="btn btn-success" id="downloadBtn">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="m7.646 11.854-3-3a.5.5 0 0 1 .708-.708L7.5 10.293V1.5a.5.5 0 0 1 1 0v8.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0z"/>
-                        </svg>
-                        Download HTML
-                    </button>
-                </div>
-                
-                <div id="slidesContainer" role="list" aria-label="Presentation slides"></div>
-            </section>
-        </main>
-    </div>
-
-    <script>
-        class PPTXToHTMLConverter {
-            constructor() {
-                this.slides = [];
-                this.originalFile = null;
-                this.imageMap = new Map();
-                this.draggedElement = null;
-                this.init();
-            }
-
-            init() {
-                this.setupEventListeners();
-                this.setupKeyboardNavigation();
-            }
-
-            setupEventListeners() {
-                const uploadArea = document.getElementById('uploadArea');
-                const fileInput = document.getElementById('fileInput');
-                const uploadBtn = document.getElementById('uploadBtn');
-                const downloadBtn = document.getElementById('downloadBtn');
-
-                // Drag and drop with keyboard support
-                uploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.add('dragover');
-                });
-
-                uploadArea.addEventListener('dragleave', () => {
-                    uploadArea.classList.remove('dragover');
-                });
-
-                uploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.remove('dragover');
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        this.handleFileSelect(files[0]);
-                    }
-                });
-
-                uploadArea.addEventListener('click', () => {
-                    fileInput.click();
-                });
-
-                uploadArea.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        fileInput.click();
-                    }
-                });
-
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        this.handleFileSelect(e.target.files[0]);
-                    }
-                });
-
-                uploadBtn.addEventListener('click', () => {
-                    this.processPPTX();
-                });
-
-                downloadBtn.addEventListener('click', () => {
-                    this.downloadHTML();
-                });
-            }
-
-            setupKeyboardNavigation() {
-                document.addEventListener('keydown', (e) => {
-                    // Allow Escape to close any focused elements
-                    if (e.key === 'Escape') {
-                        document.activeElement?.blur();
-                    }
-                });
-            }
-
-            handleFileSelect(file) {
-                if (!file.name.match(/\.(pptx|ppt)$/i)) {
-                    this.showError('Please select a PowerPoint file (.pptx or .ppt)');
-                    return;
-                }
-
-                this.originalFile = file;
-                const uploadBtn = document.getElementById('uploadBtn');
-                uploadBtn.disabled = false;
-                uploadBtn.setAttribute('aria-describedby', 'file-selected');
-                
-                this.showSuccess(`File selected: ${file.name}`);
-            }
-
-            async processPPTX() {
-                if (!this.originalFile) return;
-
-                this.showLoading(true);
-                this.announceToScreenReader('Processing presentation, please wait...');
-                
-                try {
-                    const zip = new JSZip();
-                    const zipData = await zip.loadAsync(this.originalFile);
-                    
-                    // Extract slides
-                    await this.extractSlides(zipData);
-                    
-                    // Extract images
-                    await this.extractImages(zipData);
-                    
-                    this.renderSlides();
-                    this.showLoading(false);
-                    document.getElementById('contentSection').style.display = 'block';
-                    
-                    this.announceToScreenReader(`Presentation processed successfully. ${this.slides.length} slides loaded.`);
-                    
-                    // Focus the editor section
-                    document.getElementById('editor-heading').focus();
-                    
-                } catch (error) {
-                    console.error('Processing error:', error);
-                    this.showError('Failed to process PowerPoint file. Please try a different file.');
-                    this.showLoading(false);
-                    this.announceToScreenReader('Error processing presentation file.');
-                }
-            }
-
-            async extractSlides(zipData) {
-                this.slides = [];
-                const slideFiles = Object.keys(zipData.files).filter(name => 
-                    name.match(/ppt\/slides\/slide\d+\.xml$/));
-
-                for (let i = 0; i < slideFiles.length; i++) {
-                    const slideFile = slideFiles[i];
-                    const slideNumber = parseInt(slideFile.match(/slide(\d+)\.xml$/)[1]);
-                    
-                    try {
-                        const slideXML = await zipData.files[slideFile].async('text');
-                        const slideData = await this.parseSlideXML(slideXML, slideNumber);
-                        this.slides.push(slideData);
-                    } catch (error) {
-                        console.warn(`Failed to parse slide ${slideNumber}:`, error);
-                        // Create a placeholder slide
-                        this.slides.push({
-                            number: slideNumber,
-                            title: `Slide ${slideNumber}`,
-                            content: ['Could not parse this slide content'],
-                            id: `slide-${slideNumber}`
-                        });
-                    }
-                }
-
-                // Sort slides by number
-                this.slides.sort((a, b) => a.number - b.number);
-            }
-
-            async extractImages(zipData) {
-                const mediaFiles = Object.keys(zipData.files).filter(name => 
-                    name.match(/ppt\/media\//));
-
-                for (const mediaFile of mediaFiles) {
-                    try {
-                        const imageData = await zipData.files[mediaFile].async('base64');
-                        const fileName = mediaFile.split('/').pop();
-                        const extension = fileName.split('.').pop().toLowerCase();
-                        const mimeType = this.getMimeType(extension);
-                        
-                        this.imageMap.set(fileName, `data:${mimeType};base64,${imageData}`);
-                    } catch (error) {
-                        console.warn(`Failed to extract image ${mediaFile}:`, error);
-                    }
-                }
-            }
-
-            getMimeType(extension) {
-                const mimeTypes = {
-                    'png': 'image/png',
-                    'jpg': 'image/jpeg',
-                    'jpeg': 'image/jpeg',
-                    'gif': 'image/gif',
-                    'svg': 'image/svg+xml',
-                    'webp': 'image/webp'
-                };
-                return mimeTypes[extension] || 'image/jpeg';
-            }
-
-            async parseSlideXML(xmlText, slideNumber) {
-                return new Promise((resolve) => {
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                    
-                    // Improved text extraction - handle different text elements
-                    const textElements = [
-                        ...xmlDoc.querySelectorAll('a\\:t'),
-                        ...xmlDoc.querySelectorAll('t'),
-                        ...xmlDoc.querySelectorAll('p\\:txBody a\\:t'),
-                        ...xmlDoc.querySelectorAll('p\\:txBody t')
-                    ];
-                    
-                    const content = [];
-                    const processedTexts = new Set();
-                    
-                    textElements.forEach(element => {
-                        const text = element.textContent?.trim();
-                        if (text && text.length > 0 && !processedTexts.has(text)) {
-                            content.push(text);
-                            processedTexts.add(text);
-                        }
-                    });
-
-                    // Try to find title in title placeholders first
-                    const titleElements = [
-                        ...xmlDoc.querySelectorAll('p\\:cSld p\\:spTree p\\:sp[type="title"] a\\:t'),
-                        ...xmlDoc.querySelectorAll('p\\:cSld p\\:spTree p\\:sp[type="title"] t'),
-                        ...xmlDoc.querySelectorAll('p\\:cSld p\\:spTree p\\:sp p\\:nvSpPr p\\:cNvPr[name*="Title"]'),
-                    ];
-
-                    let title = content.length > 0 ? content[0] : `Slide ${slideNumber}`;
-                    
-                    // If we found title elements, use the first one
-                    if (titleElements.length > 0) {
-                        const titleText = titleElements[0].textContent?.trim();
-                        if (titleText) {
-                            title = titleText;
-                        }
-                    }
-                    
-                    resolve({
-                        number: slideNumber,
-                        title: title,
-                        content: content,
-                        id: `slide-${slideNumber}`
-                    });
-                });
-            }
-
-            renderSlides() {
-                const container = document.getElementById('slidesContainer');
-                container.innerHTML = '';
-
-                this.slides.forEach((slide, index) => {
-                    const slideElement = this.createSlideElement(slide, index);
-                    container.appendChild(slideElement);
-                });
-
-                this.setupDragAndDrop();
-            }
-
-            createSlideElement(slide, index) {
-                const slideDiv = document.createElement('div');
-                slideDiv.className = 'slide-preview';
-                slideDiv.dataset.slideId = slide.id;
-                slideDiv.dataset.slideIndex = index;
-                slideDiv.setAttribute('role', 'listitem');
-                slideDiv.setAttribute('aria-label', `Slide ${index + 1}: ${slide.title}`);
-                slideDiv.setAttribute('draggable', 'true');
-                
-                slideDiv.innerHTML = `
-                    <div class="slide-header">
-                        <div class="slide-info">
-                            <button class="drag-handle" 
-                                    aria-label="Drag to reorder slide ${index + 1}"
-                                    tabindex="0">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm0 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4-8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm0 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm0 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm0 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                                </svg>
-                            </button>
-                            <span class="slide-title">Slide ${index + 1}: ${this.escapeHtml(slide.title)}</span>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-secondary move-up-btn" 
-                                    ${index === 0 ? 'disabled' : ''}
-                                    aria-label="Move slide ${index + 1} up">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
-                                </svg>
-                            </button>
-                            <button class="btn btn-secondary move-down-btn" 
-                                    ${index === this.slides.length - 1 ? 'disabled' : ''}
-                                    aria-label="Move slide ${index + 1} down">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-                                </svg>
-                            </button>
-                            <button class="btn btn-danger delete-btn" 
-                                    aria-label="Delete slide ${index + 1}">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                                     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
                                 </svg>
@@ -794,9 +482,9 @@
                     <div class="slide-content" role="region" aria-label="Slide content">
                         ${slide.content.map(text => 
                             `<div class="text-element" contenteditable="true" 
-                                 role="textbox" 
-                                 aria-label="Editable text content"
-                                 data-original-text="${this.escapeHtml(text)}">${this.escapeHtml(text)}</div>`
+                                  role="textbox" 
+                                  aria-label="Editable text content"
+                                  data-original-text="${this.escapeHtml(text)}">${this.escapeHtml(text)}</div>`
                         ).join('')}
                     </div>
                 `;
@@ -815,7 +503,6 @@
                 moveDownBtn?.addEventListener('click', () => this.moveSlide(index, 1));
                 deleteBtn?.addEventListener('click', () => this.deleteSlide(index));
 
-                // Keyboard support for drag handle
                 dragHandle?.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowUp' && index > 0) {
                         e.preventDefault();
@@ -829,14 +516,13 @@
 
             setupDragAndDrop() {
                 const slides = document.querySelectorAll('.slide-preview');
-                const slidesContainer = document.getElementById('slidesContainer');
                 
                 slides.forEach(slide => {
                     slide.addEventListener('dragstart', (e) => {
                         this.draggedElement = slide;
                         slide.classList.add('dragging');
                         e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/plain', slide.dataset.slideId); // Use plain text for ID
+                        e.dataTransfer.setData('text/html', slide.outerHTML);
                     });
 
                     slide.addEventListener('dragend', () => {
@@ -865,176 +551,216 @@
                         slide.classList.remove('drag-over');
                         
                         if (this.draggedElement && slide !== this.draggedElement) {
-                            const draggedId = this.draggedElement.dataset.slideId;
-                            const targetId = slide.dataset.slideId;
-
-                            const draggedIndex = this.slides.findIndex(s => s.id === draggedId);
-                            const targetIndex = this.slides.findIndex(s => s.id === targetId);
-
-                            if (draggedIndex > -1 && targetIndex > -1) {
-                                const [removed] = this.slides.splice(draggedIndex, 1);
-                                this.slides.splice(targetIndex, 0, removed);
-                                this.renderSlides(); // Re-render to reflect new order
-                                this.announceToScreenReader(`Slide moved from position ${draggedIndex + 1} to ${targetIndex + 1}.`);
-                            }
+                            const draggedIndex = parseInt(this.draggedElement.dataset.slideIndex);
+                            const targetIndex = parseInt(slide.dataset.slideIndex);
+                            
+                            this.reorderSlides(draggedIndex, targetIndex);
                         }
                     });
                 });
             }
 
-            moveSlide(index, direction) {
-                if ((direction === -1 && index === 0) || (direction === 1 && index === this.slides.length - 1)) {
-                    return; // Cannot move beyond boundaries
+            moveSlide(fromIndex, direction) {
+                const toIndex = fromIndex + direction;
+                if (toIndex >= 0 && toIndex < this.slides.length) {
+                    this.reorderSlides(fromIndex, toIndex);
+                    this.announceToScreenReader(`Slide moved to position ${toIndex + 1}`);
                 }
-
-                const newIndex = index + direction;
-                const [movedSlide] = this.slides.splice(index, 1);
-                this.slides.splice(newIndex, 0, movedSlide);
-                this.renderSlides(); // Re-render to update UI and re-apply event listeners
-                
-                // Announce movement for accessibility
-                this.announceToScreenReader(`Slide moved from position ${index + 1} to ${newIndex + 1}.`);
-                
-                // Focus the moved slide's drag handle for continued keyboard navigation
-                const newSlideElement = document.querySelector(`[data-slide-id="${movedSlide.id}"]`);
-                newSlideElement?.querySelector('.drag-handle')?.focus();
             }
 
             deleteSlide(index) {
-                if (confirm(`Are you sure you want to delete Slide ${index + 1}?`)) {
-                    const deletedSlide = this.slides.splice(index, 1);
+                if (this.slides.length <= 1) {
+                    this.showError('Cannot delete the last remaining slide.');
+                    return;
+                }
+
+                const slideTitle = this.slides[index].title;
+                if (confirm(`Are you sure you want to delete "${slideTitle}"?`)) {
+                    this.slides.splice(index, 1);
                     this.renderSlides();
-                    this.announceToScreenReader(`Slide ${deletedSlide[0].title} deleted.`);
-                    // After deletion, focus on the previous or next slide, or the upload area if no slides left.
-                    const newSlideCount = this.slides.length;
-                    if (newSlideCount > 0) {
-                        const focusIndex = Math.min(index, newSlideCount - 1);
-                        document.querySelectorAll('.slide-preview')[focusIndex]?.querySelector('.drag-handle')?.focus();
-                    } else {
-                        document.getElementById('uploadArea').focus();
-                    }
+                    this.announceToScreenReader(`Slide "${slideTitle}" deleted`);
+                    this.showSuccess('Slide deleted successfully.');
                 }
             }
 
-            updateSlideContent(slideId, textElementIndex, newText) {
-                const slide = this.slides.find(s => s.id === slideId);
-                if (slide && slide.content[textElementIndex] !== undefined) {
-                    slide.content[textElementIndex] = newText;
-                    // No re-render needed for content update as contenteditable handles it directly
-                }
+            reorderSlides(fromIndex, toIndex) {
+                const [movedSlide] = this.slides.splice(fromIndex, 1);
+                this.slides.splice(toIndex, 0, movedSlide);
+                this.renderSlides();
             }
 
             downloadHTML() {
-                let htmlContent = `
-<!DOCTYPE html>
+                try {
+                    const html = this.generateHTML();
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'presentation.html';
+                    link.click();
+                    
+                    URL.revokeObjectURL(url);
+                    this.showSuccess('HTML file downloaded successfully!');
+                    this.announceToScreenReader('Presentation downloaded as HTML file');
+                } catch (error) {
+                    console.error('Download error:', error);
+                    this.showError('Failed to generate HTML file.');
+                }
+            }
+
+            generateHTML() {
+                const slidesData = this.collectSlideData();
+                
+                return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.originalFile ? this.originalFile.name.replace(/\.(pptx|ppt)$/i, '') : 'Presentation'} - HTML Export</title>
+    <title>Presentation</title>
     <style>
-        body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
-        .slide { 
-            background: #ffffff; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-            padding: 20px; 
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
         }
-        .slide-title { 
-            font-size: 1.8rem; 
-            font-weight: bold; 
-            margin-bottom: 15px; 
-            color: #0f172a;
+        .presentation {
+            max-width: 1000px;
+            margin: 0 auto;
         }
-        .slide-content p { 
-            margin-bottom: 10px; 
-            font-size: 1.1rem; 
-            color: #475569; 
+        .slide {
+            background: white;
+            margin: 20px 0;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            page-break-after: always;
         }
-        .slide-content img {
-            max-width: 100%;
-            height: auto;
-            display: block;
+        .slide-number {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .slide-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+        }
+        .slide-content {
+            font-size: 16px;
+            color: #444;
+        }
+        .text-block {
             margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #007acc;
             border-radius: 4px;
+        }
+        .navigation {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .nav-button:hover {
+            background: #005c99;
+        }
+        @media print {
+            .navigation { display: none; }
+            .slide { page-break-after: always; margin: 0; box-shadow: none; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .slide { padding: 20px; }
+            .navigation { position: static; margin-bottom: 20px; }
         }
     </style>
 </head>
 <body>
-    <h1>${this.originalFile ? this.originalFile.name.replace(/\.(pptx|ppt)$/i, '') : 'Presentation'}</h1>
-`;
+    <div class="navigation">
+        <button class="nav-button" onclick="window.print()">Print</button>
+        <button class="nav-button" onclick="toggleFullscreen()">Fullscreen</button>
+    </div>
+    
+    <div class="presentation">
+        \${slidesData.map((slide, index) => \`
+            <div class="slide" id="slide-\${index + 1}">
+                <div class="slide-number">Slide \${index + 1} of \${slidesData.length}</div>
+                <h1 class="slide-title">\${slide.title}</h1>
+                <div class="slide-content">
+                    \${slide.content.map(text => \`
+                        <div class="text-block">\${text}</div>
+                    \`).join('')}
+                </div>
+            </div>
+        \`).join('')}
+    </div>
 
-                this.slides.forEach((slide, index) => {
-                    htmlContent += `
-    <section class="slide" id="slide-${index + 1}" aria-labelledby="slide-title-${index + 1}">
-        <h2 class="slide-title" id="slide-title-${index + 1}">${this.escapeHtml(slide.title)}</h2>
-        <div class="slide-content">
-            ${slide.content.map(item => {
-                // Check if the item is an image based on imageMap keys
-                if (this.imageMap.has(item)) { // Assuming 'item' would be the image filename if parsed as such
-                    return `<img src="${this.imageMap.get(item)}" alt="${this.escapeHtml(item.split('.').slice(0, -1).join('.'))}">`;
-                }
-                return `<p>${this.escapeHtml(item)}</p>`;
-            }).join('')}
-        </div>
-    </section>
-`;
+    <script>
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                window.scrollBy(0, window.innerHeight);
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                window.scrollBy(0, -window.innerHeight);
+            }
+        });
+    </script>
+</body>
+</html>\`;
+            }
+
+            collectSlideData() {
+                const slides = document.querySelectorAll('.slide-preview');
+                const slidesData = [];
+
+                slides.forEach((slideElement) => {
+                    const titleElement = slideElement.querySelector('.slide-title');
+                    const textElements = slideElement.querySelectorAll('.text-element');
+                    
+                    const title = titleElement.textContent.replace(/^Slide \d+: /, '');
+                    const content = Array.from(textElements).map(el => el.textContent.trim()).filter(text => text.length > 0);
+                    
+                    slidesData.push({ title, content });
                 });
 
-                htmlContent += `
-</body>
-</html>
-`;
+                return slidesData;
+            }
 
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${this.originalFile ? this.originalFile.name.replace(/\.(pptx|ppt)$/i, '') : 'presentation'}.html`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                this.announceToScreenReader('HTML file downloaded successfully.');
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
 
             showLoading(show) {
-                const loadingDiv = document.getElementById('loading');
-                const uploadSection = document.querySelector('.upload-section');
-                const contentSection = document.getElementById('contentSection');
-
-                if (show) {
-                    loadingDiv.classList.add('show');
-                    uploadSection.style.display = 'none';
-                    contentSection.style.display = 'none';
-                } else {
-                    loadingDiv.classList.remove('show');
-                    uploadSection.style.display = 'block';
-                }
-            }
-
-            showAlert(message, type) {
-                const existingAlert = document.querySelector('.alert');
-                if (existingAlert) {
-                    existingAlert.remove();
-                }
-
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type}`;
-                alertDiv.setAttribute('role', 'alert');
-                alertDiv.textContent = message;
-
-                const mainContent = document.getElementById('main-content');
-                mainContent.prepend(alertDiv);
-
-                // Announce alert for screen readers
-                this.announceToScreenReader(message);
-
-                setTimeout(() => {
-                    alertDiv.remove();
-                }, 5000); // Remove after 5 seconds
+                const loading = document.getElementById('loading');
+                loading.classList.toggle('show', show);
             }
 
             showSuccess(message) {
@@ -1045,38 +771,34 @@
                 this.showAlert(message, 'error');
             }
 
-            // Simple HTML escaping for safety
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.appendChild(document.createTextNode(text));
-                return div.innerHTML;
+            showAlert(message, type) {
+                document.querySelectorAll('.alert').forEach(alert => alert.remove());
+                
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.setAttribute('role', 'alert');
+                alert.textContent = message;
+                
+                const container = document.querySelector('.container');
+                container.insertBefore(alert, container.firstChild);
+                
+                setTimeout(() => {
+                    alert.remove();
+                }, 5000);
             }
 
-            // Function to announce messages to screen readers
             announceToScreenReader(message) {
-                let liveRegion = document.getElementById('live-region');
-                if (!liveRegion) {
-                    liveRegion = document.createElement('div');
-                    liveRegion.id = 'live-region';
-                    liveRegion.setAttribute('aria-live', 'polite');
-                    liveRegion.setAttribute('aria-atomic', 'true');
-                    this.visuallyHide(liveRegion);
-                    document.body.appendChild(liveRegion);
-                }
-                liveRegion.textContent = message;
-            }
-
-            // Utility to visually hide an element for screen readers
-            visuallyHide(el) {
-                el.style.position = 'absolute';
-                el.style.width = '1px';
-                el.style.height = '1px';
-                el.style.padding = '0';
-                el.style.margin = '-1px';
-                el.style.overflow = 'hidden';
-                el.style.clip = 'rect(0, 0, 0, 0)';
-                el.style.whiteSpace = 'nowrap';
-                el.style.border = '0';
+                const announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'visually-hidden';
+                announcement.textContent = message;
+                
+                document.body.appendChild(announcement);
+                
+                setTimeout(() => {
+                    document.body.removeChild(announcement);
+                }, 1000);
             }
         }
 

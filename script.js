@@ -1,15 +1,16 @@
 // script.js
 
-// IMPORTANT: These global variables (pptxParser, VFLauncher, tinycolor)
+// IMPORTANT: These global variables (VFLauncher, tinycolor)
 // are assumed to be exposed by the .min.js files loaded in index.html
 // You MUST ensure the correct .min.js files for @vf.js/launcher and tinycolor2
 // are included in index.html, and that they expose these global names.
 
 // Access pptx-parser's functions via the global 'pptx-parser' object
 // The UMD build you provided should make the main 'parse' function available
-// as the 'default' export, and 'vf' as a named export.
-const parsePptx = window['pptx-parser'] ? window['pptx-parser'].default : null;
-const vfConvert = window['pptx-parser'] ? window['pptx-parser'].vf : null;
+// as the 'default' export, and 'vf' as a named export on that object.
+const pptxParserGlobal = window['pptx-parser']; // Get the entire object
+const parsePptx = pptxParserGlobal ? pptxParserGlobal.default : null; // Access the 'default' export
+const vfConvert = pptxParserGlobal ? pptxParserGlobal.vf : null; // Access the 'vf' named export
 
 // Hypothetical global names for other libraries.
 // YOU NEED TO VERIFY THESE based on their actual UMD builds.
@@ -24,22 +25,22 @@ if (tinycolor2) {
 }
 
 
-let playerInstance = null; // Renamed 'pl' to avoid potential conflicts and for clarity
+let playerInstance = null;
 let totalScenes = 0;
 let currentSceneIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const fileDlg = document.getElementById('pptxFile'); // Renamed from fileDlg for consistency with index.html
+    const fileDlg = document.getElementById('pptxFile');
     const parseButton = document.getElementById('parseButton');
     const prevButton = document.getElementById('btn-prev');
     const nextButton = document.getElementById('btn-next');
     const outputDiv = document.getElementById('output');
     const loadingMessage = document.getElementById('loadingMessage');
     const errorMessage = document.getElementById('errorMessage');
-    const vfContainer = document.querySelector('.vf-container'); // Assuming you have this div
+    const vfContainer = document.querySelector('.vf-container');
 
     fileDlg.onchange = handleFileSelection;
-    parseButton.onclick = handleParseClick; // New button for explicit parsing
+    parseButton.onclick = handleParseClick;
     prevButton.onclick = function() {
         if (playerInstance && currentSceneIndex > 0) {
             currentSceneIndex--;
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initial state setup
-    parseButton.disabled = true; // Disable until a file is selected or logic ready
+    parseButton.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = true;
 
@@ -75,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!parsePptx || !vfConvert || !createVF || !tinycolor2) {
         errorMessage.textContent = 'Required JavaScript libraries (pptx-parser, @vf.js/launcher, tinycolor2) are not loaded correctly. Please ensure all .min.js files are in the lib/ folder and linked in index.html.';
         errorMessage.style.display = 'block';
-        parseButton.disabled = true;
         console.error('Missing global library functions:', {
+            pptxParserGlobal: !!pptxParserGlobal, // Check the main object
             parsePptx: !!parsePptx,
             vfConvert: !!vfConvert,
             createVF: !!createVF,
@@ -87,8 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleFileSelection(e) {
-    // This function can be used if you want to trigger parsing immediately on file select,
-    // but with a separate button, it just serves to enable the button.
     console.log("File selected:", e.target.files[0] ? e.target.files[0].name : "No file");
 }
 
@@ -102,7 +101,7 @@ async function handleParseClick() {
     const nextButton = document.getElementById('btn-next');
     const vfContainer = document.querySelector('.vf-container');
 
-    outputDiv.innerHTML = ''; // Clear previous output
+    outputDiv.innerHTML = '';
     errorMessage.style.display = 'none';
 
     if (!file) {
@@ -111,8 +110,9 @@ async function handleParseClick() {
         return;
     }
 
+    // Double-check if the functions are available after the DOM is ready
     if (!parsePptx || !vfConvert || !createVF) {
-        errorMessage.textContent = 'Critical parsing libraries are not available. Check browser console for details.';
+        errorMessage.textContent = 'Critical parsing/rendering libraries are not available. Check browser console for details.';
         errorMessage.style.display = 'block';
         return;
     }
@@ -124,6 +124,7 @@ async function handleParseClick() {
 
     try {
         console.log("Starting PPTX parsing...");
+        // Use the corrected 'parsePptx' function
         const pptJson = await parsePptx(file, { flattenGroup: true });
         console.log("Parsed PPTX JSON:", pptJson);
 
@@ -134,43 +135,41 @@ async function handleParseClick() {
         const width = pptJson.pageSize.width.value;
         const height = pptJson.pageSize.height.value;
 
-        if (vfConvert) { // Ensure vfConvert is available before using it
+        if (vfConvert) {
             console.log("Converting to VF JSON...");
+            // Use the corrected 'vfConvert' function
             const vfJson = await vfConvert(pptJson, { width, height });
             console.log('VF JSON:', vfJson);
 
-            // You had a Blob conversion, which is good for vf.js player
             const tmp = new Blob([JSON.stringify(vfJson)], { type: 'application/json' });
 
             const config = {
-                container: vfContainer, // Use the dedicated container
+                container: vfContainer,
                 debug: true,
                 width,
                 height,
-                resolution: window.devicePixelRatio || 1 // Fallback for resolution
+                resolution: window.devicePixelRatio || 1
             };
             console.log("VF Player Config:", config);
 
-            // Ensure createVF is available before calling it
             if (createVF) {
                 const v = createVF(config, player => {
-                    window.player = playerInstance = player; // Store player instance globally if needed
-                    window.v = v; // Store the VF instance globally
+                    window.player = playerInstance = player;
+                    window.v = v;
 
                     player.onReady = function() {
-                        console.log("VF Player: onReady"); // Initialization complete
+                        console.log("VF Player: onReady");
                         currentSceneIndex = 0;
                         totalScenes = playerInstance.data.scenes.length;
                         if (totalScenes > 0) {
                             prevButton.disabled = false;
                             nextButton.disabled = false;
                         }
-                        // Optionally, extract and display text here from player.data.scenes
                         displayHandoutContent(playerInstance.data.scenes);
                     };
 
                     player.onSceneCreate = function() {
-                        console.log("VF Player: onSceneCreate"); // Resource loaded for scene
+                        console.log("VF Player: onSceneCreate");
                     };
 
                     player.onMessage = function(msg) {
@@ -190,7 +189,6 @@ async function handleParseClick() {
                         nextButton.disabled = true;
                     };
 
-                    // Play the Blob URL
                     player.play(URL.createObjectURL(tmp));
                 });
             } else {
@@ -202,7 +200,6 @@ async function handleParseClick() {
             errorMessage.textContent = 'PPTX to VF conversion function (vf) not found. Cannot render presentation.';
             errorMessage.style.display = 'block';
             console.error('vfConvert is null. Check pptx-parser.min.js for vf export.');
-            // Fallback for text-only handout if vf is not available
             displayHandoutContentFromPptJson(pptJson);
         }
 
@@ -216,10 +213,9 @@ async function handleParseClick() {
     }
 }
 
-// Function to display content as a handout
 function displayHandoutContent(scenes) {
     const outputDiv = document.getElementById('output');
-    outputDiv.innerHTML = '<h2>Handout Content:</h2>'; // Clear previous content
+    outputDiv.innerHTML = '<h2>Handout Content:</h2>';
 
     if (!scenes || scenes.length === 0) {
         outputDiv.innerHTML += '<p>No content extracted for handout.</p>';
@@ -231,22 +227,20 @@ function displayHandoutContent(scenes) {
         slideDiv.classList.add('slide-content');
 
         const slideTitle = document.createElement('h3');
-        slideTitle.textContent = `Slide ${index + 1}`; // Default title
+        slideTitle.textContent = `Slide ${index + 1}`;
 
-        // Attempt to find slide text from VF scene data
         let slideText = [];
         if (scene.elementMap) {
-            // Iterate through elements to find text
             for (const key in scene.elementMap) {
                 const element = scene.elementMap[key];
-                if (element.text) { // Assuming text elements have a 'text' property
+                if (element.text) {
                     slideText.push(element.text);
                 }
             }
         }
 
         if (slideText.length > 0) {
-            slideTitle.textContent += ': ' + slideText[0].substring(0, 50) + '...'; // Use first text as part of title
+            slideTitle.textContent += ': ' + slideText[0].substring(0, Math.min(slideText[0].length, 50)) + '...';
             slideText.forEach(text => {
                 const p = document.createElement('p');
                 p.textContent = text;
@@ -258,24 +252,11 @@ function displayHandoutContent(scenes) {
             slideDiv.appendChild(p);
         }
 
-        // IMPORTANT: Speaker notes are generally NOT included in VF.js output.
-        // You would need to extract them directly from the `pptJson` before VF conversion,
-        // if `pptx-parser` exposes them in its initial JSON output.
-        // For example:
-        // const originalSlide = pptJson.slides[index];
-        // if (originalSlide && originalSlide.notes) {
-        //     const notesP = document.createElement('p');
-        //     notesP.innerHTML = `<strong>Speaker Notes:</strong> ${originalSlide.notes.text}`;
-        //     slideDiv.appendChild(notesP);
-        // }
-
-
         slideDiv.prepend(slideTitle);
         outputDiv.appendChild(slideDiv);
     });
 }
 
-// Fallback if vfConvert or createVF isn't available
 function displayHandoutContentFromPptJson(pptJson) {
     const outputDiv = document.getElementById('output');
     outputDiv.innerHTML = '<h2>Handout Content (Text-Only Fallback):</h2>';
@@ -293,7 +274,6 @@ function displayHandoutContentFromPptJson(pptJson) {
         slideTitle.textContent = `Slide ${index + 1}`;
         slideDiv.appendChild(slideTitle);
 
-        // Assuming pptxJson structure might have a 'text' array or 'notes'
         if (slide.text && Array.isArray(slide.text)) {
             slide.text.forEach(textBlock => {
                 const p = document.createElement('p');
@@ -310,8 +290,7 @@ function displayHandoutContentFromPptJson(pptJson) {
             slideDiv.appendChild(p);
         }
 
-        // Check for speaker notes from the pptJson
-        if (slide.notes && slide.notes.text) { // This is a common structure for notes
+        if (slide.notes && slide.notes.text) {
             const notesP = document.createElement('p');
             notesP.innerHTML = `<strong>Speaker Notes:</strong> ${slide.notes.text}`;
             slideDiv.appendChild(notesP);

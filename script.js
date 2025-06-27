@@ -64,7 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fileLabel.classList.remove('has-files'); // Remove visual feedback
         processStatus.textContent = 'No file selected.';
         outputDiv.innerHTML = '';
-        handoutPlaceholder.style.display = 'block'; // Show handout placeholder
+        // FIXED: Add null check for handoutPlaceholder
+        if (handoutPlaceholder) {
+            handoutPlaceholder.style.display = 'block'; // Show handout placeholder
+        }
         errorMessage.style.display = 'none';
         loadingMessage.style.display = 'none';
         parseButton.disabled = true;
@@ -96,7 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
             processStatus.textContent = `File selected: ${fileDlg.files[0].name}`;
             fileLabel.classList.add('has-files'); // Add visual feedback
             outputDiv.innerHTML = ''; // Clear previous output
-            handoutPlaceholder.style.display = 'block'; // Show handout placeholder initially
+            // FIXED: Add null check for handoutPlaceholder
+            if (handoutPlaceholder) {
+                handoutPlaceholder.style.display = 'block'; // Show handout placeholder initially
+            }
             errorMessage.style.display = 'none';
             loadingMessage.style.display = 'none';
             // Reset VF Player content when a new file is chosen
@@ -196,8 +202,12 @@ async function handleParseClick() {
 
 
     outputDiv.innerHTML = ''; // Clear previous output
-    handoutPlaceholder.style.display = 'none'; // Hide placeholder
-    errorMessage.style.display = 'none'; // <--- This is the line where the error occurs
+    // FIXED: Add null check for handoutPlaceholder
+    if (handoutPlaceholder) {
+        handoutPlaceholder.style.display = 'none'; // Hide placeholder
+    }
+    errorMessage.style.display = 'none';
+    
     if (!file) {
         errorMessage.textContent = 'Please select a .pptx file first.';
         errorMessage.style.display = 'block';

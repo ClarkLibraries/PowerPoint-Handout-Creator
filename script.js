@@ -179,11 +179,25 @@ async function handleParseClick() {
     const vfPlayerContainer = document.getElementById('vfPlayerContainer');
     const handoutPlaceholder = document.getElementById('handoutPlaceholder');
 
+    // --- ADD THESE LOGS ---
+    console.log('--- Debugging handleParseClick ---');
+    console.log('file:', file);
+    console.log('parseButton:', parseButton);
+    console.log('downloadHandoutBtn:', downloadHandoutBtn);
+    console.log('outputDiv:', outputDiv);
+    console.log('loadingMessage:', loadingMessage);
+    console.log('errorMessage:', errorMessage);
+    console.log('prevButton:', prevButton);
+    console.log('nextButton:', nextButton);
+    console.log('vfPlayerContainer:', vfPlayerContainer);
+    console.log('handoutPlaceholder:', handoutPlaceholder);
+    console.log('---------------------------------');
+    // --- END ADDED LOGS ---
+
 
     outputDiv.innerHTML = ''; // Clear previous output
     handoutPlaceholder.style.display = 'none'; // Hide placeholder
-    errorMessage.style.display = 'none';
-
+    errorMessage.style.display = 'none'; // <--- This is the line where the error occurs
     if (!file) {
         errorMessage.textContent = 'Please select a .pptx file first.';
         errorMessage.style.display = 'block';

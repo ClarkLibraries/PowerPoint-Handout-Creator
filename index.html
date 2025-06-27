@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerPoint Handout Creator</title>
+    <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -103,6 +104,18 @@
             padding: 1em;
             margin-top: 1em;
         }
+        
+        /* Handout placeholder styling */
+        .handout-placeholder {
+            text-align: center;
+            padding: 2em;
+            color: #6b7280;
+            font-style: italic;
+            background-color: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            margin: 1em 0;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-6">
@@ -163,11 +176,15 @@
         <p class="text-sm text-gray-500 mb-4 text-center">
             Text and notes extracted from your PowerPoint file for handout creation.
         </p>
+        
+        <!-- Moved handoutPlaceholder outside of output div for better control -->
+        <div id="handoutPlaceholder" class="handout-placeholder">
+            <p>📄 Parsed handout content will appear here after you upload and parse a PowerPoint file.</p>
+        </div>
+        
         <div id="output" class="space-y-4">
-            <p id="handoutPlaceholder" class="text-gray-500 text-center py-8">
-                Parsed handout content will appear here.
-            </p>
-            </div>
+            <!-- Parsed content will be inserted here -->
+        </div>
 
     </div>
 
@@ -183,24 +200,24 @@
 
                 <h3 class="text-lg font-semibold mb-2">Structure Your Presentation for Handouts</h3>
                 <ul class="list-disc list-inside mb-4 space-y-1">
-                    <li>**Use Outline View:** Ensure your PowerPoint content is well-structured using titles and bullet points. The parser will extract text most effectively from structured content.</li>
-                    <li>**Speaker Notes:** If you want detailed notes in your handout, make sure to add them to the "Notes" section of each slide in PowerPoint. This tool is designed to extract these notes.</li>
-                    <li>**Clear and Concise Text:** While the visual presentation is important, remember that the handout relies on clear text. Avoid putting all your information only in images; use text boxes.</li>
+                    <li><strong>Use Outline View:</strong> Ensure your PowerPoint content is well-structured using titles and bullet points. The parser will extract text most effectively from structured content.</li>
+                    <li><strong>Speaker Notes:</strong> If you want detailed notes in your handout, make sure to add them to the "Notes" section of each slide in PowerPoint. This tool is designed to extract these notes.</li>
+                    <li><strong>Clear and Concise Text:</strong> While the visual presentation is important, remember that the handout relies on clear text. Avoid putting all your information only in images; use text boxes.</li>
                 </ul>
 
                 <h3 class="text-lg font-semibold mb-2">What the Handout Will Include</h3>
                 <ul class="list-disc list-inside mb-4 space-y-1">
-                    <li>**Text Content:** All textual content from your slides will be extracted.</li>
-                    <li>**Speaker Notes:** Any speaker notes associated with your slides will be included.</li>
-                    <li>**Basic Formatting:** While the live preview aims for visual fidelity, the generated handout will focus on the text and notes, maintaining basic paragraph and list structures.</li>
-                    <li>**Image Placeholders:** Images might not be directly embedded in the text handout but will be visible in the live player.</li>
+                    <li><strong>Text Content:</strong> All textual content from your slides will be extracted.</li>
+                    <li><strong>Speaker Notes:</strong> Any speaker notes associated with your slides will be included.</li>
+                    <li><strong>Basic Formatting:</strong> While the live preview aims for visual fidelity, the generated handout will focus on the text and notes, maintaining basic paragraph and list structures.</li>
+                    <li><strong>Image Placeholders:</strong> Images might not be directly embedded in the text handout but will be visible in the live player.</li>
                 </ul>
 
                 <h3 class="text-lg font-semibold mb-2">Helpful Tips</h3>
                 <ul class="list-disc list-inside mb-4 space-y-1">
-                    <li>**Preview Live:** Use the "Live Presentation Preview" to see how your slides appear.</li>
-                    <li>**Review Handout:** Always check the "Extracted Handout Content" section to ensure all necessary text and notes are present before downloading.</li>
-                    <li>**Clear and Retry:** If results are not as expected, use "Clear All" and try uploading again.</li>
+                    <li><strong>Preview Live:</strong> Use the "Live Presentation Preview" to see how your slides appear.</li>
+                    <li><strong>Review Handout:</strong> Always check the "Extracted Handout Content" section to ensure all necessary text and notes are present before downloading.</li>
+                    <li><strong>Clear and Retry:</strong> If results are not as expected, use "Clear All" and try uploading again.</li>
                 </ul>
                 <p class="mb-4">
                     We're here to help you create effective handouts. Feel free to reach out with any questions or feedback!

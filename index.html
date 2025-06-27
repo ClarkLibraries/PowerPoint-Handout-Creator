@@ -4,52 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerPoint Handout Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
+            background-color: #f4f7f6;
             color: #333;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 900px;
+            margin: 2em auto;
+            padding: 1em;
             background-color: #fff;
-            padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2.5em 1.5em;
             text-align: center;
-            color: #0056b3;
-            margin-bottom: 30px;
-        }
-        input[type="file"] {
-            display: block;
-            margin: 20px auto;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            display: block;
-            margin: 10px auto;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            transition: all 0.2s ease-in-out;
+            background-color: #f9fafb;
         }
-        button:hover {
-            background-color: #0056b3;
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
         }
-        #output {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
+        .file-upload-area.has-files {
+            border-color: #10b981; /* Green border when files are selected */
+            background-color: #ecfdf5; /* Light green background when files are selected */
         }
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+        .file-upload-area span {
+            display: block;
+            margin-bottom: 0.5em;
+        }
+        .file-upload-area small {
+            color: #6b7280;
+        }
+
+        /* VF Player Container Styling */
+        .vf-container-wrapper {
+            background-color: #000; /* Black background for presentation */
+            border-radius: 8px;
+            overflow: hidden; /* Ensures content stays within bounds */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px; /* Minimum height for visibility */
+            position: relative;
+        }
+
+        .vf-container {
+            width: 100%;
+            height: 100%;
+            /* vf.js player will render inside here */
+        }
+
+        /* Adjust VF container to be flexible, if necessary */
+        .vf-container canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Slide content for handout */
         .slide-content {
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -57,120 +82,134 @@
             margin-bottom: 15px;
             border-radius: 5px;
         }
-        .slide-content h2 {
+        .slide-content h2, .slide-content h3 {
             margin-top: 0;
             color: #28a745;
+            font-weight: bold;
         }
-        .error {
-            color: red;
+        .error-message {
+            color: #ef4444; /* red-500 */
             font-weight: bold;
             text-align: center;
+            padding: 1em;
+            background-color: #fee2e2; /* red-100 */
+            border-radius: 0.5em;
+            margin-top: 1em;
         }
-        .loading {
+        .loading-message {
             text-align: center;
             font-style: italic;
-            color: #666;
+            color: #6b7280; /* gray-500 */
+            padding: 1em;
+            margin-top: 1em;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>PowerPoint Handout Creator</h1>
+<body class="bg-gray-100 p-6">
+    <div class="container bg-white p-8 rounded-lg shadow-xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">PowerPoint Handout Creator</h1>
 
-        <input type="file" id="pptxFile" accept=".pptx">
-        <button id="parseButton">Parse PowerPoint</button>
+        <div class="mb-8">
+            <label for="pptxFile" id="fileLabel" class="file-upload-area block text-blue-600 font-medium text-lg">
+                <span>⬆️ Click here or drag a PowerPoint (.pptx) file to upload</span>
+                <small>Only .pptx files are supported</small>
+                <input type="file" id="pptxFile" accept=".pptx">
+            </label>
+            <p class="text-sm text-gray-500 mt-2 text-center" id="process-status" aria-live="polite">No file selected.</p>
+        </div>
 
-        <div id="loadingMessage" class="loading" style="display: none;">
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+            <button id="parseButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Parse PowerPoint
+            </button>
+            <button id="downloadHandoutBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Download Handout HTML
+            </button>
+            <button id="clearBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                Clear All
+            </button>
+        </div>
+
+        <div id="loadingMessage" class="loading-message" style="display: none;" aria-live="assertive">
             Parsing file... This might take a moment.
         </div>
-        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="errorMessage" class="error-message" style="display: none;" aria-live="assertive"></div>
 
-        <div id="output">
+        <hr class="my-8 border-t-2 border-gray-200">
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Live Presentation Preview</h2>
+        <p class="text-sm text-gray-500 mb-4 text-center">
+            View your PowerPoint slides interactively.
+        </p>
+
+        <div class="vf-container-wrapper">
+            <div id="vfPlayerContainer" class="vf-container w-full h-full flex items-center justify-center text-white">
+                <p>Upload a .pptx file to see the live presentation preview.</p>
             </div>
+        </div>
+
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="btn-prev" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Previous Slide
+            </button>
+            <button id="btn-next" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Next Slide
+            </button>
+        </div>
+
+        <hr class="my-8 border-t-2 border-gray-200">
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Extracted Handout Content</h2>
+        <p class="text-sm text-gray-500 mb-4 text-center">
+            Text and notes extracted from your PowerPoint file for handout creation.
+        </p>
+        <div id="output" class="space-y-4">
+            <p id="handoutPlaceholder" class="text-gray-500 text-center py-8">
+                Parsed handout content will appear here.
+            </p>
+            </div>
+
+    </div>
+
+    <div class="container bg-white p-8 rounded-lg shadow-xl mt-8">
+        <details>
+            <summary class="text-xl font-bold text-gray-800 cursor-pointer py-2">
+                Tips for Best Results: PowerPoint Handout Creator
+            </summary>
+            <div class="prose max-w-none text-gray-700 mt-4">
+                <p class="mb-4">
+                    This tool helps you convert PowerPoint presentations (.pptx) into accessible HTML handouts, including a live preview of your slides. Follow these tips for the best results:
+                </p>
+
+                <h3 class="text-lg font-semibold mb-2">Structure Your Presentation for Handouts</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li>**Use Outline View:** Ensure your PowerPoint content is well-structured using titles and bullet points. The parser will extract text most effectively from structured content.</li>
+                    <li>**Speaker Notes:** If you want detailed notes in your handout, make sure to add them to the "Notes" section of each slide in PowerPoint. This tool is designed to extract these notes.</li>
+                    <li>**Clear and Concise Text:** While the visual presentation is important, remember that the handout relies on clear text. Avoid putting all your information only in images; use text boxes.</li>
+                </ul>
+
+                <h3 class="text-lg font-semibold mb-2">What the Handout Will Include</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li>**Text Content:** All textual content from your slides will be extracted.</li>
+                    <li>**Speaker Notes:** Any speaker notes associated with your slides will be included.</li>
+                    <li>**Basic Formatting:** While the live preview aims for visual fidelity, the generated handout will focus on the text and notes, maintaining basic paragraph and list structures.</li>
+                    <li>**Image Placeholders:** Images might not be directly embedded in the text handout but will be visible in the live player.</li>
+                </ul>
+
+                <h3 class="text-lg font-semibold mb-2">Helpful Tips</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li>**Preview Live:** Use the "Live Presentation Preview" to see how your slides appear.</li>
+                    <li>**Review Handout:** Always check the "Extracted Handout Content" section to ensure all necessary text and notes are present before downloading.</li>
+                    <li>**Clear and Retry:** If results are not as expected, use "Clear All" and try uploading again.</li>
+                </ul>
+                <p class="mb-4">
+                    We're here to help you create effective handouts. Feel free to reach out with any questions or feedback!
+                </p>
+            </div>
+        </details>
     </div>
 
     <script src="pptx-parser.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const pptxFileInput = document.getElementById('pptxFile');
-            const parseButton = document.getElementById('parseButton');
-            const outputDiv = document.getElementById('output');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const errorMessage = document.getElementById('errorMessage');
-
-            parseButton.addEventListener('click', async () => {
-                const file = pptxFileInput.files[0];
-                outputDiv.innerHTML = '';
-                errorMessage.style.display = 'none';
-
-                if (!file) {
-                    errorMessage.textContent = 'Please select a .pptx file first.';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                loadingMessage.style.display = 'block';
-                parseButton.disabled = true;
-
-                try {
-                    // Assuming pptxParser is exposed globally by your script
-                    // The pptx-parser library you linked appears to be a Node.js library.
-                    // If it's intended for browser use, it likely exposes a function
-                    // or object on the `window` scope. I'm assuming `window.pptxParser`
-                    // based on common patterns. You might need to adjust this.
-                    // If it's `parse` directly from an imported module,
-                    // you'd typically need a build step (like webpack/rollup)
-                    // or use a direct CDN link if available for browser use.
-
-                    // For this example, let's assume it provides a function
-                    // that takes a File object and returns a Promise.
-                    // If your pptx-parser.min.js works differently (e.g., expects a path),
-                    // you will need to adjust this line.
-                    const parsedData = await window.pptxParser(file);
-
-                    // If the parser returns an object with a 'text' property or similar
-                    // or an array of slides with text.
-                    if (parsedData && Array.isArray(parsedData.slides)) {
-                        parsedData.slides.forEach((slide, index) => {
-                            const slideDiv = document.createElement('div');
-                            slideDiv.classList.add('slide-content');
-                            slideDiv.innerHTML = `<h2>Slide ${index + 1}</h2>`;
-                            if (slide.text && Array.isArray(slide.text)) {
-                                slide.text.forEach(paragraph => {
-                                    const p = document.createElement('p');
-                                    p.textContent = paragraph;
-                                    slideDiv.appendChild(p);
-                                });
-                            } else if (typeof slide.text === 'string') {
-                                const p = document.createElement('p');
-                                p.textContent = slide.text;
-                                slideDiv.appendChild(p);
-                            } else {
-                                const p = document.createElement('p');
-                                p.textContent = 'No text content found for this slide.';
-                                slideDiv.appendChild(p);
-                            }
-                            outputDiv.appendChild(slideDiv);
-                        });
-                    } else if (parsedData && parsedData.text) {
-                        // If the parser returns just a single string of all text
-                        const p = document.createElement('p');
-                        p.textContent = parsedData.text;
-                        outputDiv.appendChild(p);
-                    } else {
-                        outputDiv.innerHTML = '<p>No recognizable content parsed from the PPTX file.</p>';
-                    }
-
-                } catch (error) {
-                    console.error('Error parsing PPTX:', error);
-                    errorMessage.textContent = `Error parsing file: ${error.message || error}`;
-                    errorMessage.style.display = 'block';
-                } finally {
-                    loadingMessage.style.display = 'none';
-                    parseButton.disabled = false;
-                }
-            });
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

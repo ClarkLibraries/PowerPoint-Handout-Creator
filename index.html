@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PowerPoint to HTML Converter</title>
+    <title>Enhanced PowerPoint to HTML Converter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xml2js/0.6.2/xml2js.min.js"></script>
     <style>
@@ -49,24 +49,8 @@
             border: 0;
         }
 
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 6px;
-            background: var(--primary-color);
-            color: white;
-            padding: 8px;
-            text-decoration: none;
-            border-radius: var(--border-radius);
-            z-index: 1000;
-        }
-
-        .skip-link:focus {
-            top: 6px;
-        }
-
         .container {
-            max-width: 1024px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 24px;
         }
@@ -93,15 +77,6 @@
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-md);
             margin-bottom: 24px;
-        }
-
-        .card-header {
-            padding: 24px 24px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card-content {
-            padding: 24px;
         }
 
         .upload-section {
@@ -208,13 +183,10 @@
             background: #047857;
         }
 
-        .btn-danger {
-            background: var(--error-color);
-            color: white;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            background: #b91c1c;
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            min-height: 32px;
         }
 
         .btn:disabled {
@@ -222,14 +194,9 @@
             cursor: not-allowed;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
         .content-section {
             display: none;
+            padding: 24px;
         }
 
         .section-header {
@@ -253,6 +220,7 @@
             border-radius: var(--border-radius);
             margin-bottom: 16px;
             transition: all 0.2s ease;
+            overflow: hidden;
             cursor: move;
         }
 
@@ -278,45 +246,87 @@
             padding: 16px 20px;
             border-bottom: 1px solid var(--border-color);
             background: var(--background-color);
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
         }
 
-        .slide-info {
+        .slide-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .slide-controls {
             display: flex;
+            gap: 8px;
             align-items: center;
-            gap: 12px;
         }
 
         .drag-handle {
             cursor: move;
             color: var(--text-secondary);
-            padding: 8px;
+            padding: 4px;
             border-radius: 4px;
-            background: none;
+            background: transparent;
             border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .drag-handle:hover,
-        .drag-handle:focus {
-            color: var(--primary-color);
-            background: #eff6ff;
-        }
-
-        .slide-title {
-            font-weight: 500;
+        .drag-handle:hover {
+            background: var(--border-color);
             color: var(--text-primary);
+        }
+
+        .drag-handle:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
         }
 
         .slide-content {
             padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .text-element {
-            padding: 12px;
             margin: 8px 0;
-            background: var(--background-color);
-            border-radius: var(--border-radius);
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
             border-left: 3px solid var(--primary-color);
+            cursor: text;
+        }
+
+        .text-element:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .text-element.title {
+            background: #eff6ff;
+            border-left-color: #1d4ed8;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .text-element.subtitle {
+            background: #f0f9ff;
+            border-left-color: #0284c7;
+            font-weight: 500;
+        }
+
+        .text-element.bullet {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .text-element.bullet:before {
+            content: "•";
+            position: absolute;
+            left: 12px;
+            color: var(--primary-color);
+            font-weight: bold;
         }
 
         .loading {
@@ -363,393 +373,1650 @@
             color: #991b1b;
         }
 
-        .alert[role="alert"] {
-            font-weight: 500;
+        .parsing-options {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
         }
 
-        /* Responsive Design */
+        .parsing-options h3 {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .option-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 16px;
             }
-
-            .header h1 {
-                font-size: 1.875rem;
-            }
-
+            
             .section-header {
                 flex-direction: column;
                 align-items: stretch;
             }
-
-            .slide-header {
-                flex-direction: column;
-                gap: 16px;
-                align-items: stretch;
-            }
-
-            .btn-group {
-                justify-content: center;
-            }
-
+            
             .upload-area {
                 padding: 32px 16px;
             }
-        }
-
-        /* High contrast mode support */
-        @media (prefers-contrast: high) {
-            :root {
-                --border-color: #000000;
-                --text-secondary: #000000;
+            
+            .option-group {
+                flex-direction: column;
             }
-        }
-
-        /* Reduced motion support */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+            
+            .slide-controls {
+                flex-wrap: wrap;
             }
-        }
-
-        /* Focus indicators for keyboard navigation */
-        .slide-preview:focus-within {
-            outline: 2px solid var(--primary-color);
-            outline-offset: 2px;
-        }
-
-        /* Ensure sufficient color contrast */
-        .btn:focus-visible {
-            outline: 2px solid #ffffff;
-            outline-offset: 2px;
-        }
-
-        .sortable-ghost {
-            opacity: 0.4;
-        }
-
-        .sortable-chosen {
-            background: #eff6ff;
         }
     </style>
 </head>
 <body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    
     <div class="container">
         <header class="header">
-            <h1>PowerPoint to HTML Converter</h1>
-            <p>Upload, edit, and convert your presentations to accessible HTML</p>
+            <h1>Enhanced PowerPoint to HTML Converter</h1>
+            <p>Advanced parsing with improved content structure and formatting</p>
         </header>
 
-        <main id="main-content">
-            <section class="card upload-section" aria-labelledby="upload-heading">
-                <h2 id="upload-heading" class="visually-hidden">Upload PowerPoint File</h2>
-                
-                <div class="upload-area" 
-                     id="uploadArea" 
-                     tabindex="0" 
-                     role="button" 
-                     aria-describedby="upload-instructions"
-                     aria-label="Upload PowerPoint file">
-                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <main>
+            <section class="card upload-section">
+                <div class="upload-area" id="uploadArea" tabindex="0" role="button">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                     <div class="upload-text">Drop your PowerPoint file here</div>
-                    <div class="upload-hint" id="upload-instructions">
-                        or click to browse (supports .pptx and .ppt files)
+                    <div class="upload-hint">or click to browse (supports .pptx files)</div>
+                    <input type="file" class="file-input" id="fileInput" accept=".pptx">
+                </div>
+                
+                <div class="parsing-options" id="parsingOptions" style="display: none;">
+                    <h3>Parsing Options</h3>
+                    <div class="option-group">
+                        <div class="option">
+                            <input type="checkbox" id="preserveFormatting" checked>
+                            <label for="preserveFormatting">Preserve text formatting</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="detectLists" checked>
+                            <label for="detectLists">Auto-detect bullet points</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="mergeFragments" checked>
+                            <label for="mergeFragments">Merge text fragments</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="cleanWhitespace" checked>
+                            <label for="cleanWhitespace">Clean excess whitespace</label>
+                        </div>
                     </div>
-                    <input type="file" 
-                           class="file-input" 
-                           id="fileInput" 
-                           accept=".pptx,.ppt"
-                           aria-describedby="upload-instructions">
                 </div>
                 
                 <div style="text-align: center; margin-top: 24px;">
-                    <button class="btn btn-primary" id="uploadBtn" disabled>
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="slide-content" role="region" aria-label="Slide content">
-                        ${slide.content.map(text => 
-                            `<div class="text-element" contenteditable="true" 
-                                  role="textbox" 
-                                  aria-label="Editable text content"
-                                  data-original-text="${this.escapeHtml(text)}">${this.escapeHtml(text)}</div>`
-                        ).join('')}
-                    </div>
-                `;
+                    <button class="btn btn-primary" id="processBtn" disabled>
+                        Process PowerPoint
+                    </button>
+                </div>
+            </section>
 
-                this.setupSlideEventListeners(slideDiv, index);
-                return slideDiv;
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing PowerPoint file...</p>
+            </div>
+
+            <section class="card content-section" id="contentSection">
+                <div class="section-header">
+                    <h2 class="section-title">Extracted Content</h2>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-success" id="downloadBtn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                            </svg>
+                            Download HTML
+                        </button>
+                        <button class="btn btn-secondary" id="previewBtn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                            Preview
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats" id="stats"></div>
+                <div id="slidesContainer"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        class PPTXToHTMLConverter {
+            constructor() {
+                this.slides = [];
+                this.presentationTitle = '';
+                this.draggedElement = null;
+                this.setupEventListeners();
             }
 
-            setupSlideEventListeners(slideElement, index) {
-                const moveUpBtn = slideElement.querySelector('.move-up-btn');
-                const moveDownBtn = slideElement.querySelector('.move-down-btn');
-                const deleteBtn = slideElement.querySelector('.delete-btn');
-                const dragHandle = slideElement.querySelector('.drag-handle');
+            setupEventListeners() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+                const processBtn = document.getElementById('processBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const previewBtn = document.getElementById('previewBtn');
 
-                moveUpBtn?.addEventListener('click', () => this.moveSlide(index, -1));
-                moveDownBtn?.addEventListener('click', () => this.moveSlide(index, 1));
-                deleteBtn?.addEventListener('click', () => this.deleteSlide(index));
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    this.handleFiles(e.dataTransfer.files);
+                });
 
-                dragHandle?.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowUp' && index > 0) {
+                fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+                processBtn.addEventListener('click', () => this.processFile());
+                downloadBtn.addEventListener('click', () => this.downloadHTML());
+                previewBtn.addEventListener('click', () => this.previewHTML());
+
+                uploadArea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        this.moveSlide(index, -1);
-                    } else if (e.key === 'ArrowDown' && index < this.slides.length - 1) {
-                        e.preventDefault();
-                        this.moveSlide(index, 1);
+                        fileInput.click();
                     }
                 });
             }
 
-            setupDragAndDrop() {
-                const slides = document.querySelectorAll('.slide-preview');
+            handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                        this.selectedFile = file;
+                        this.presentationTitle = file.name.replace('.pptx', '');
+                        document.getElementById('processBtn').disabled = false;
+                        document.getElementById('parsingOptions').style.display = 'block';
+                        this.showSuccess(`File "${file.name}" selected successfully. Click "Process PowerPoint" to continue.`);
+                    } else {
+                        this.showError('Please select a valid PowerPoint (.pptx) file.');
+                    }
+                }
+            }
+
+            async processFile() {
+                if (!this.selectedFile) return;
+
+                this.showLoading(true);
+                document.getElementById('contentSection').style.display = 'none';
+
+                try {
+                    const arrayBuffer = await this.selectedFile.arrayBuffer();
+                    const zip = await JSZip.loadAsync(arrayBuffer);
+                    
+                    await this.extractSlides(zip);
+                    this.renderResults();
+                    this.setupDragAndDrop();
+                    
+                    document.getElementById('contentSection').style.display = 'block';
+                    this.showSuccess(`Successfully processed ${this.slides.length} slides!`);
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    this.showError('Failed to process PowerPoint file. Please try again.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async extractSlides(zip) {
+                this.slides = [];
+
+                for (let i = 1; i <= 50; i++) {
+                    const slidePath = `ppt/slides/slide${i}.xml`;
+                    const slideFile = zip.file(slidePath);
+                    
+                    if (!slideFile) break;
+                    
+                    try {
+                        const slideXml = await slideFile.async('text');
+                        const slideData = await this.parseSlideXML(slideXml, i);
+                        
+                        if (slideData && (slideData.title || slideData.content.length > 0)) {
+                            this.slides.push(slideData);
+                        }
+                    } catch (error) {
+                        console.warn(`Error processing slide ${i}:`, error);
+                    }
+                }
+            }
+
+            async parseSlideXML(xmlContent, slideNumber) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
                 
-                slides.forEach(slide => {
-                    slide.addEventListener('dragstart', (e) => {
-                        this.draggedElement = slide;
-                        slide.classList.add('dragging');
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/html', slide.outerHTML);
-                    });
+                const options = this.getParsingOptions();
+                const textNodes = xmlDoc.querySelectorAll('a\\:t, t');
+                
+                let allTexts = [];
+                textNodes.forEach(node => {
+                    const text = node.textContent?.trim();
+                    if (text && text.length > 0) {
+                        allTexts.push(text);
+                    }
+                });
 
-                    slide.addEventListener('dragend', () => {
-                        slide.classList.remove('dragging');
-                        this.draggedElement = null;
-                        document.querySelectorAll('.drag-over').forEach(el => {
-                            el.classList.remove('drag-over');
-                        });
-                    });
+                if (allTexts.length === 0) {
+                    return null;
+                }
 
-                    slide.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                        
-                        if (slide !== this.draggedElement) {
-                            slide.classList.add('drag-over');
+                const processedContent = this.processSlideContent(allTexts, options);
+                
+                return {
+                    number: slideNumber,
+                    title: processedContent.title || `Slide ${slideNumber}`,
+                    content: processedContent.content,
+                    rawTexts: allTexts
+                };
+            }
+
+            processSlideContent(texts, options) {
+                let processedTexts = [...texts];
+                
+                if (options.cleanWhitespace) {
+                    processedTexts = processedTexts.map(text => 
+                        text.replace(/\s+/g, ' ').trim()
+                    ).filter(text => text.length > 0);
+                }
+
+                if (options.mergeFragments) {
+                    processedTexts = this.mergeTextFragments(processedTexts);
+                }
+
+                let title = '';
+                let content = [];
+
+                if (processedTexts.length > 0) {
+                    title = processedTexts[0];
+                    content = processedTexts.slice(1);
+                }
+
+                if (options.detectLists) {
+                    content = this.categorizeContent(content);
+                }
+
+                return { title, content };
+            }
+
+            mergeTextFragments(texts) {
+                const merged = [];
+                let currentText = '';
+                
+                for (const text of texts) {
+                    if (this.isTextContinuation(currentText, text)) {
+                        currentText += ' ' + text;
+                    } else {
+                        if (currentText) {
+                            merged.push(currentText);
                         }
-                    });
+                        currentText = text;
+                    }
+                }
+                
+                if (currentText) {
+                    merged.push(currentText);
+                }
+                
+                return merged;
+            }
 
-                    slide.addEventListener('dragleave', () => {
-                        slide.classList.remove('drag-over');
-                    });
+            isTextContinuation(current, next) {
+                if (!current || !next) return false;
+                
+                const endsIncomplete = !current.match(/[.!?]$/);
+                const startsLowercase = next.match(/^[a-z]/);
+                const isShort = current.length < 10 || next.length < 10;
+                
+                return (endsIncomplete && startsLowercase) || 
+                       (isShort && !next.match(/^\d+\./) && !this.isTitleLikeText(next));
+            }
 
-                    slide.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        slide.classList.remove('drag-over');
-                        
-                        if (this.draggedElement && slide !== this.draggedElement) {
-                            const draggedIndex = parseInt(this.draggedElement.dataset.slideIndex);
-                            const targetIndex = parseInt(slide.dataset.slideIndex);
-                            
-                            this.reorderSlides(draggedIndex, targetIndex);
-                        }
-                    });
+            isTitleLikeText(text) {
+                return text.length < 50 && 
+                       (text.match(/^[A-Z]/) || 
+                        text.includes(':') || 
+                        text.match(/^\d+\./));
+            }
+
+            categorizeContent(content) {
+                return content.map(text => {
+                    const type = this.getContentType(text);
+                    return { text, type };
                 });
             }
 
-            moveSlide(fromIndex, direction) {
-                const toIndex = fromIndex + direction;
-                if (toIndex >= 0 && toIndex < this.slides.length) {
-                    this.reorderSlides(fromIndex, toIndex);
-                    this.announceToScreenReader(`Slide moved to position ${toIndex + 1}`);
+            getContentType(text) {
+                if (text.length < 50 && (text.includes(':') || text.match(/^[A-Z][^.]*$/))) {
+                    return 'subtitle';
                 }
+                if (text.match(/^[\-\•\*]/) || text.length < 100) {
+                    return 'bullet';
+                }
+                return 'paragraph';
             }
 
-            deleteSlide(index) {
-                if (this.slides.length <= 1) {
-                    this.showError('Cannot delete the last remaining slide.');
-                    return;
-                }
-
-                const slideTitle = this.slides[index].title;
-                if (confirm(`Are you sure you want to delete "${slideTitle}"?`)) {
-                    this.slides.splice(index, 1);
-                    this.renderSlides();
-                    this.announceToScreenReader(`Slide "${slideTitle}" deleted`);
-                    this.showSuccess('Slide deleted successfully.');
-                }
+            getParsingOptions() {
+                return {
+                    preserveFormatting: document.getElementById('preserveFormatting').checked,
+                    detectLists: document.getElementById('detectLists').checked,
+                    mergeFragments: document.getElementById('mergeFragments').checked,
+                    cleanWhitespace: document.getElementById('cleanWhitespace').checked
+                };
             }
 
-            reorderSlides(fromIndex, toIndex) {
-                const [movedSlide] = this.slides.splice(fromIndex, 1);
-                this.slides.splice(toIndex, 0, movedSlide);
+            renderResults() {
+                this.renderStats();
                 this.renderSlides();
             }
 
-            downloadHTML() {
-                try {
-                    const html = this.generateHTML();
-                    const blob = new Blob([html], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'presentation.html';
-                    link.click();
-                    
-                    URL.revokeObjectURL(url);
-                    this.showSuccess('HTML file downloaded successfully!');
-                    this.announceToScreenReader('Presentation downloaded as HTML file');
-                } catch (error) {
-                    console.error('Download error:', error);
-                    this.showError('Failed to generate HTML file.');
-                }
+            renderStats() {
+                const statsContainer = document.getElementById('stats');
+                const totalTexts = this.slides.reduce((sum, slide) => sum + slide.content.length, 0);
+                
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <span class="stat-number">${this.slides.length}</span>
+                        <span class="stat-label">Slides Processed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">${totalTexts}</span>
+                        <span class="stat-label">Text Elements</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">${this.presentationTitle.length > 15 ? this.presentationTitle.substring(0, 15) + '...' : this.presentationTitle}</span>
+                        <span class="stat-label">Presentation</span>
+                    </div>
+                `;
             }
 
-            generateHTML() {
-                const slidesData = this.collectSlideData();
-                
-                return `<!DOCTYPE html>
+            renderSlides() {
+                const container = document.getElementById('slidesContainer');
+                container.innerHTML = '';
+
+                this.slides.forEach((slide, index) => {
+                    const slideElement = this.createSlideElement(slide, index);
+                    container.appendChild(slideElement);
+                });
+            }
+
+            createSlideElement(slide, index) {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'slide-preview';
+                slideDiv.dataset.slideIndex = index;
+                slideDiv.draggable = true;
+
+                const contentHtml = slide.content.map(item => {
+                    const text = typeof item === 'string' ? item : item.text;
+                    const type = typeof item === 'object' ? item.type : 'paragraph';
+                    return `<div class="text-element ${type}" contenteditable="true">${this.escapeHtml(text)}</div>`;
+                }).join('');
+
+                slideDiv.innerHTML = `
+                    <div class="slide-header">
+                        <div class="slide-title">Slide ${index + 1}: ${this.escapeHtml(slide.title)}</div>
+                        <div class="slide-controls">
+                            <button class="drag-handle" tabindex="0" aria-label="Drag to reorder slide" title="Drag to reorder">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2-6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                            </button>
+                            <button class="btn btn-small btn-secondary move-up-btn" ${index === 0 ? 'disabled' : ''} title="Move up">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presentation</title>
+    <title>Enhanced PowerPoint to HTML Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xml2js/0.6.2/xml2js.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --error-color: #dc2626;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --focus-ring: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
             line-height: 1.6;
         }
-        .presentation {
-            max-width: 1000px;
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 24px;
         }
-        .slide {
-            background: white;
-            margin: 20px 0;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            page-break-after: always;
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
         }
-        .slide-number {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
-        .slide-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #007acc;
-            padding-bottom: 10px;
+
+        .header p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
         }
-        .slide-content {
-            font-size: 16px;
-            color: #444;
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 24px;
         }
-        .text-block {
-            margin: 15px 0;
-            padding: 10px;
-            background: #f9f9f9;
-            border-left: 4px solid #007acc;
-            border-radius: 4px;
+
+        .upload-section {
+            padding: 24px;
         }
-        .navigation {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .nav-button {
-            background: #007acc;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            margin: 2px;
-            border-radius: 4px;
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 48px 24px;
+            text-align: center;
+            transition: all 0.2s ease;
             cursor: pointer;
+            background: var(--surface-color);
         }
-        .nav-button:hover {
-            background: #005c99;
+
+        .upload-area:hover,
+        .upload-area:focus-within {
+            border-color: var(--primary-color);
+            background: #eff6ff;
         }
-        @media print {
-            .navigation { display: none; }
-            .slide { page-break-after: always; margin: 0; box-shadow: none; }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #eff6ff;
         }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: var(--text-secondary);
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 44px;
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--surface-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--background-color);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #047857;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            min-height: 32px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .content-section {
+            display: none;
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .slide-preview {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            cursor: move;
+        }
+
+        .slide-preview:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .slide-preview.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .slide-preview.drag-over {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--background-color);
+        }
+
+        .slide-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .slide-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 4px;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drag-handle:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .drag-handle:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .slide-content {
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .text-element {
+            margin: 8px 0;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary-color);
+            cursor: text;
+        }
+
+        .text-element:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .text-element.title {
+            background: #eff6ff;
+            border-left-color: #1d4ed8;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .text-element.subtitle {
+            background: #f0f9ff;
+            border-left-color: #0284c7;
+            font-weight: 500;
+        }
+
+        .text-element.bullet {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .text-element.bullet:before {
+            content: "•";
+            position: absolute;
+            left: 12px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin: 16px 0;
+            border: 1px solid;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border-color: #bbf7d0;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .parsing-options {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .parsing-options h3 {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .option-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
         @media (max-width: 768px) {
-            body { padding: 10px; }
-            .slide { padding: 20px; }
-            .navigation { position: static; margin-bottom: 20px; }
+            .container {
+                padding: 16px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .upload-area {
+                padding: 32px 16px;
+            }
+            
+            .option-group {
+                flex-direction: column;
+            }
+            
+            .slide-controls {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="navigation">
-        <button class="nav-button" onclick="window.print()">Print</button>
-        <button class="nav-button" onclick="toggleFullscreen()">Fullscreen</button>
-    </div>
-    
-    <div class="presentation">
-        \${slidesData.map((slide, index) => \`
-            <div class="slide" id="slide-\${index + 1}">
-                <div class="slide-number">Slide \${index + 1} of \${slidesData.length}</div>
-                <h1 class="slide-title">\${slide.title}</h1>
-                <div class="slide-content">
-                    \${slide.content.map(text => \`
-                        <div class="text-block">\${text}</div>
-                    \`).join('')}
+    <div class="container">
+        <header class="header">
+            <h1>Enhanced PowerPoint to HTML Converter</h1>
+            <p>Advanced parsing with improved content structure and formatting</p>
+        </header>
+
+        <main>
+            <section class="card upload-section">
+                <div class="upload-area" id="uploadArea" tabindex="0" role="button">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <div class="upload-text">Drop your PowerPoint file here</div>
+                    <div class="upload-hint">or click to browse (supports .pptx files)</div>
+                    <input type="file" class="file-input" id="fileInput" accept=".pptx">
                 </div>
+                
+                <div class="parsing-options" id="parsingOptions" style="display: none;">
+                    <h3>Parsing Options</h3>
+                    <div class="option-group">
+                        <div class="option">
+                            <input type="checkbox" id="preserveFormatting" checked>
+                            <label for="preserveFormatting">Preserve text formatting</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="detectLists" checked>
+                            <label for="detectLists">Auto-detect bullet points</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="mergeFragments" checked>
+                            <label for="mergeFragments">Merge text fragments</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" id="cleanWhitespace" checked>
+                            <label for="cleanWhitespace">Clean excess whitespace</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 24px;">
+                    <button class="btn btn-primary" id="processBtn" disabled>
+                        Process PowerPoint
+                    </button>
+                </div>
+            </section>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing PowerPoint file...</p>
             </div>
-        \`).join('')}
+
+            <section class="card content-section" id="contentSection">
+                <div class="section-header">
+                    <h2 class="section-title">Extracted Content</h2>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-success" id="downloadBtn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                            </svg>
+                            Download HTML
+                        </button>
+                        <button class="btn btn-secondary" id="previewBtn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                            Preview
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats" id="stats"></div>
+                <div id="slidesContainer"></div>
+            </section>
+        </main>
     </div>
 
     <script>
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
+        class PPTXToHTMLConverter {
+            constructor() {
+                this.slides = [];
+                this.presentationTitle = '';
+                this.draggedElement = null;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+                const processBtn = document.getElementById('processBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const previewBtn = document.getElementById('previewBtn');
+
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    this.handleFiles(e.dataTransfer.files);
+                });
+
+                fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+                processBtn.addEventListener('click', () => this.processFile());
+                downloadBtn.addEventListener('click', () => this.downloadHTML());
+                previewBtn.addEventListener('click', () => this.previewHTML());
+
+                uploadArea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        fileInput.click();
+                    }
+                });
+            }
+
+            handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                        this.selectedFile = file;
+                        this.presentationTitle = file.name.replace('.pptx', '');
+                        document.getElementById('processBtn').disabled = false;
+                        document.getElementById('parsingOptions').style.display = 'block';
+                        this.showSuccess(`File "${file.name}" selected successfully. Click "Process PowerPoint" to continue.`);
+                    } else {
+                        this.showError('Please select a valid PowerPoint (.pptx) file.');
+                    }
+                }
+            }
+
+            async processFile() {
+                if (!this.selectedFile) return;
+
+                this.showLoading(true);
+                document.getElementById('contentSection').style.display = 'none';
+
+                try {
+                    const arrayBuffer = await this.selectedFile.arrayBuffer();
+                    const zip = await JSZip.loadAsync(arrayBuffer);
+                    
+                    await this.extractSlides(zip);
+                    this.renderResults();
+                    this.setupDragAndDrop();
+                    
+                    document.getElementById('contentSection').style.display = 'block';
+                    this.showSuccess(`Successfully processed ${this.slides.length} slides!`);
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    this.showError('Failed to process PowerPoint file. Please try again.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async extractSlides(zip) {
+                this.slides = [];
+
+                for (let i = 1; i <= 50; i++) {
+                    const slidePath = `ppt/slides/slide${i}.xml`;
+                    const slideFile = zip.file(slidePath);
+                    
+                    if (!slideFile) break;
+                    
+                    try {
+                        const slideXml = await slideFile.async('text');
+                        const slideData = await this.parseSlideXML(slideXml, i);
+                        
+                        if (slideData && (slideData.title || slideData.content.length > 0)) {
+                            this.slides.push(slideData);
+                        }
+                    } catch (error) {
+                        console.warn(`Error processing slide ${i}:`, error);
+                    }
+                }
+            }
+
+            async parseSlideXML(xmlContent, slideNumber) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+                
+                const options = this.getParsingOptions();
+                const textNodes = xmlDoc.querySelectorAll('a\\:t, t');
+                
+                let allTexts = [];
+                textNodes.forEach(node => {
+                    const text = node.textContent?.trim();
+                    if (text && text.length > 0) {
+                        allTexts.push(text);
+                    }
+                });
+
+                if (allTexts.length === 0) {
+                    return null;
+                }
+
+                const processedContent = this.processSlideContent(allTexts, options);
+                
+                return {
+                    number: slideNumber,
+                    title: processedContent.title || `Slide ${slideNumber}`,
+                    content: processedContent.content,
+                    rawTexts: allTexts
+                };
+            }
+
+            processSlideContent(texts, options) {
+                let processedTexts = [...texts];
+                
+                if (options.cleanWhitespace) {
+                    processedTexts = processedTexts.map(text => 
+                        text.replace(/\s+/g, ' ').trim()
+                    ).filter(text => text.length > 0);
+                }
+
+                if (options.mergeFragments) {
+                    processedTexts = this.mergeTextFragments(processedTexts);
+                }
+
+                let title = '';
+                let content = [];
+
+                if (processedTexts.length > 0) {
+                    title = processedTexts[0];
+                    content = processedTexts.slice(1);
+                }
+
+                if (options.detectLists) {
+                    content = this.categorizeContent(content);
+                }
+
+                return { title, content };
+            }
+
+            mergeTextFragments(texts) {
+                const merged = [];
+                let currentText = '';
+                
+                for (const text of texts) {
+                    if (this.isTextContinuation(currentText, text)) {
+                        currentText += ' ' + text;
+                    } else {
+                        if (currentText) {
+                            merged.push(currentText);
+                        }
+                        currentText = text;
+                    }
+                }
+                
+                if (currentText) {
+                    merged.push(currentText);
+                }
+                
+                return merged;
+            }
+
+            isTextContinuation(current, next) {
+                if (!current || !next) return false;
+                
+                const endsIncomplete = !current.match(/[.!?]$/);
+                const startsLowercase = next.match(/^[a-z]/);
+                const isShort = current.length < 10 || next.length < 10;
+                
+                return (endsIncomplete && startsLowercase) || 
+                       (isShort && !next.match(/^\d+\./) && !this.isTitleLikeText(next));
+            }
+
+            isTitleLikeText(text) {
+                return text.length < 50 && 
+                       (text.match(/^[A-Z]/) || 
+                        text.includes(':') || 
+                        text.match(/^\d+\./));
+            }
+
+            categorizeContent(content) {
+                return content.map(text => {
+                    const type = this.getContentType(text);
+                    return { text, type };
+                });
+            }
+
+            getContentType(text) {
+                if (text.length < 50 && (text.includes(':') || text.match(/^[A-Z][^.]*$/))) {
+                    return 'subtitle';
+                }
+                if (text.match(/^[\-\•\*]/) || text.length < 100) {
+                    return 'bullet';
+                }
+                return 'paragraph';
+            }
+
+            getParsingOptions() {
+                return {
+                    preserveFormatting: document.getElementById('preserveFormatting').checked,
+                    detectLists: document.getElementById('detectLists').checked,
+                    mergeFragments: document.getElementById('mergeFragments').checked,
+                    cleanWhitespace: document.getElementById('cleanWhitespace').checked
+                };
+            }
+
+            renderResults() {
+                this.renderStats();
+                this.renderSlides();
+            }
+
+            renderStats() {
+                const statsContainer = document.getElementById('stats');
+                const totalTexts = this.slides.reduce((sum, slide) => sum + slide.content.length, 0);
+                
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <span class="stat-number">${this.slides.length}</span>
+                        <span class="stat-label">Slides Processed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">${totalTexts}</span>
+                        <span class="stat-label">Text Elements</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">${this.presentationTitle.length > 15 ? this.presentationTitle.substring(0, 15) + '...' : this.presentationTitle}</span>
+                        <span class="stat-label">Presentation</span>
+                    </div>
+                `;
+            }
+
+            renderSlides() {
+                const container = document.getElementById('slidesContainer');
+                container.innerHTML = '';
+
+                this.slides.forEach((slide, index) => {
+                    const slideElement = this.createSlideElement(slide, index);
+                    container.appendChild(slideElement);
+                });
+            }
+
+            createSlideElement(slide, index) {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'slide-preview';
+                slideDiv.dataset.slideIndex = index;
+                slideDiv.draggable = true;
+
+                const contentHtml = slide.content.map(item => {
+                    const text = typeof item === 'string' ? item : item.text;
+                    const type = typeof item === 'object' ? item.type : 'paragraph';
+                    return `<div class="text-element ${type}" contenteditable="true">${this.escapeHtml(text)}</div>`;
+                }).join('');
+
+                slideDiv.innerHTML = `
+                    <div class="slide-header">
+                        <div class="slide-title">Slide ${index + 1}: ${this.escapeHtml(slide.title)}</div>
+                        <div class="slide-controls">
+                            <button class="drag-handle" tabindex="0" aria-label="Drag to reorder slide" title="Drag to reorder">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2-6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                            </button>
+                            <button class="btn btn-small btn-secondary move-up-btn" ${index === 0 ? 'disabled' : ''} title="Move up">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708L8 1.707l-3.146 3.147a.5.5 0 0 0 .708.708L8 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+                                </svg>
+                            </button>
+                            <button class="btn btn-small btn-secondary move-down-btn" ${index === this.slides.length - 1 ? 'disabled' : ''} title="Move down">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708L8 14.707l-4.354-4.353a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="slide-content">
+                        <div class="text-element title" contenteditable="true">${this.escapeHtml(slide.title)}</div>
+                        ${contentHtml}
+                    </div>
+                `;
+
+                this.attachSlideEventListeners(slideDiv, index);
+                return slideDiv;
+            }
+
+            attachSlideEventListeners(slideElement, index) {
+                const moveUpBtn = slideElement.querySelector('.move-up-btn');
+                const moveDownBtn = slideElement.querySelector('.move-down-btn');
+
+                if (moveUpBtn && !moveUpBtn.disabled) {
+                    moveUpBtn.addEventListener('click', () => this.moveSlide(index, index - 1));
+                }
+
+                if (moveDownBtn && !moveDownBtn.disabled) {
+                    moveDownBtn.addEventListener('click', () => this.moveSlide(index, index + 1));
+                }
+            }
+
+            setupDragAndDrop() {
+                const slidesContainer = document.getElementById('slidesContainer');
+                
+                slidesContainer.addEventListener('dragstart', (e) => {
+                    if (e.target.classList.contains('slide-preview')) {
+                        this.draggedElement = e.target;
+                        e.target.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                    }
+                });
+
+                slidesContainer.addEventListener('dragend', (e) => {
+                    if (e.target.classList.contains('slide-preview')) {
+                        e.target.classList.remove('dragging');
+                        this.draggedElement = null;
+                    }
+                });
+
+                slidesContainer.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const afterElement = this.getDragAfterElement(slidesContainer, e.clientY);
+                    const dragging = document.querySelector('.dragging');
+                    
+                    if (afterElement == null) {
+                        slidesContainer.appendChild(dragging);
+                    } else {
+                        slidesContainer.insertBefore(dragging, afterElement);
+                    }
+                });
+
+                slidesContainer.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.updateSlideOrder();
+                });
+            }
+
+            getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.slide-preview:not(.dragging)')];
+                
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            moveSlide(fromIndex, toIndex) {
+                if (toIndex < 0 || toIndex >= this.slides.length) return;
+                
+                const slide = this.slides.splice(fromIndex, 1)[0];
+                this.slides.splice(toIndex, 0, slide);
+                
+                this.renderSlides();
+                this.setupDragAndDrop();
+            }
+
+            updateSlideOrder() {
+                const slideElements = [...document.querySelectorAll('.slide-preview')];
+                const newOrder = slideElements.map(el => parseInt(el.dataset.slideIndex));
+                
+                const reorderedSlides = newOrder.map(index => this.slides[index]);
+                this.slides = reorderedSlides;
+                
+                this.renderSlides();
+                this.setupDragAndDrop();
+            }
+
+            generateHTML() {
+                const editedSlides = this.getEditedSlides();
+                
+                let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${this.escapeHtml(this.presentationTitle)}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .presentation-header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .presentation-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .slide {
+            background: white;
+            margin: 30px 0;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .slide:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        
+        .slide-number {
+            color: #667eea;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .slide-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+        
+        .slide-content {
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        
+        .content-subtitle {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #34495e;
+            margin: 20px 0 12px 0;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        
+        .content-bullet {
+            margin: 12px 0;
+            padding: 12px 0 12px 20px;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .content-bullet:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .content-paragraph {
+            margin: 16px 0;
+            text-align: justify;
+            line-height: 1.8;
+        }
+        
+        .table-of-contents {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid #27ae60;
+        }
+        
+        .toc-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .toc-item {
+            margin: 10px 0;
+        }
+        
+        .toc-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+            display: block;
+        }
+        
+        .toc-link:hover {
+            background-color: #f8f9fa;
+            text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 50px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .presentation-title {
+                font-size: 2rem;
+            }
+            
+            .slide {
+                padding: 20px;
+                margin: 20px 0;
+            }
+            
+            .slide-title {
+                font-size: 1.5rem;
             }
         }
         
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                window.scrollBy(0, window.innerHeight);
-            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                window.scrollBy(0, -window.innerHeight);
+        @media print {
+            .slide {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
             }
-        });
-    </script>
+            
+            .presentation-header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="presentation-header">
+        <h1 class="presentation-title">${this.escapeHtml(this.presentationTitle)}</h1>
+    </header>
+    
+    <nav class="table-of-contents">
+        <h2 class="toc-title">Table of Contents</h2>
+        <ul class="toc-list">
+            ${editedSlides.map((slide, index) => 
+                `<li class="toc-item">
+                    <a href="#slide-${index + 1}" class="toc-link">
+                        Slide ${index + 1}: ${this.escapeHtml(slide.title)}
+                    </a>
+                </li>`
+            ).join('')}
+        </ul>
+    </nav>
+    
+    <main>
+        ${editedSlides.map((slide, index) => `
+            <section class="slide" id="slide-${index + 1}">
+                <div class="slide-number">Slide ${index + 1}</div>
+                <h2 class="slide-title">${this.escapeHtml(slide.title)}</h2>
+                <div class="slide-content">
+                    ${slide.content.map(item => {
+                        const text = typeof item === 'string' ? item : item.text;
+                        const type = typeof item === 'object' ? item.type : 'paragraph';
+                        return `<div class="content-${type}">${this.escapeHtml(text)}</div>`;
+                    }).join('')}
+                </div>
+            </section>
+        `).join('')}
+    </main>
+    
+    <footer class="footer">
+        <p>Generated from ${this.escapeHtml(this.presentationTitle)} • ${editedSlides.length} slides</p>
+    </footer>
 </body>
-</html>\`;
+</html>`;
+                
+                return html;
             }
 
-            collectSlideData() {
-                const slides = document.querySelectorAll('.slide-preview');
-                const slidesData = [];
-
-                slides.forEach((slideElement) => {
-                    const titleElement = slideElement.querySelector('.slide-title');
-                    const textElements = slideElement.querySelectorAll('.text-element');
+            getEditedSlides() {
+                const slideElements = document.querySelectorAll('.slide-preview');
+                return Array.from(slideElements).map((slideEl, index) => {
+                    const titleEl = slideEl.querySelector('.text-element.title');
+                    const contentEls = slideEl.querySelectorAll('.text-element:not(.title)');
                     
-                    const title = titleElement.textContent.replace(/^Slide \d+: /, '');
-                    const content = Array.from(textElements).map(el => el.textContent.trim()).filter(text => text.length > 0);
+                    const title = titleEl ? titleEl.textContent.trim() : `Slide ${index + 1}`;
+                    const content = Array.from(contentEls).map(el => {
+                        const text = el.textContent.trim();
+                        const type = Array.from(el.classList).find(cls => 
+                            ['subtitle', 'bullet', 'paragraph'].includes(cls)
+                        ) || 'paragraph';
+                        return { text, type };
+                    }).filter(item => item.text.length > 0);
                     
-                    slidesData.push({ title, content });
+                    return { title, content };
                 });
+            }
 
-                return slidesData;
+            downloadHTML() {
+                const html = this.generateHTML();
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.presentationTitle}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.showSuccess('HTML file downloaded successfully!');
+            }
+
+            previewHTML() {
+                const html = this.generateHTML();
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(html);
+                newWindow.document.close();
             }
 
             escapeHtml(text) {
@@ -772,36 +2039,27 @@
             }
 
             showAlert(message, type) {
-                document.querySelectorAll('.alert').forEach(alert => alert.remove());
-                
+                const existingAlert = document.querySelector('.alert');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+
                 const alert = document.createElement('div');
                 alert.className = `alert alert-${type}`;
-                alert.setAttribute('role', 'alert');
                 alert.textContent = message;
                 
-                const container = document.querySelector('.container');
-                container.insertBefore(alert, container.firstChild);
+                const uploadSection = document.querySelector('.upload-section');
+                uploadSection.appendChild(alert);
                 
                 setTimeout(() => {
-                    alert.remove();
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
                 }, 5000);
-            }
-
-            announceToScreenReader(message) {
-                const announcement = document.createElement('div');
-                announcement.setAttribute('aria-live', 'polite');
-                announcement.setAttribute('aria-atomic', 'true');
-                announcement.className = 'visually-hidden';
-                announcement.textContent = message;
-                
-                document.body.appendChild(announcement);
-                
-                setTimeout(() => {
-                    document.body.removeChild(announcement);
-                }, 1000);
             }
         }
 
+        // Initialize the converter when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new PPTXToHTMLConverter();
         });

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint Handout Creator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+        }
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .slide-content {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .slide-content h2 {
+            margin-top: 0;
+            color: #28a745;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PowerPoint Handout Creator</h1>
+
+        <input type="file" id="pptxFile" accept=".pptx">
+        <button id="parseButton">Parse PowerPoint</button>
+
+        <div id="loadingMessage" class="loading" style="display: none;">
+            Parsing file... This might take a moment.
+        </div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <div id="output">
+            </div>
+    </div>
+
+    <script src="pptx-parser.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pptxFileInput = document.getElementById('pptxFile');
+            const parseButton = document.getElementById('parseButton');
+            const outputDiv = document.getElementById('output');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+
+            parseButton.addEventListener('click', async () => {
+                const file = pptxFileInput.files[0];
+                outputDiv.innerHTML = '';
+                errorMessage.style.display = 'none';
+
+                if (!file) {
+                    errorMessage.textContent = 'Please select a .pptx file first.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                loadingMessage.style.display = 'block';
+                parseButton.disabled = true;
+
+                try {
+                    // Assuming pptxParser is exposed globally by your script
+                    // The pptx-parser library you linked appears to be a Node.js library.
+                    // If it's intended for browser use, it likely exposes a function
+                    // or object on the `window` scope. I'm assuming `window.pptxParser`
+                    // based on common patterns. You might need to adjust this.
+                    // If it's `parse` directly from an imported module,
+                    // you'd typically need a build step (like webpack/rollup)
+                    // or use a direct CDN link if available for browser use.
+
+                    // For this example, let's assume it provides a function
+                    // that takes a File object and returns a Promise.
+                    // If your pptx-parser.min.js works differently (e.g., expects a path),
+                    // you will need to adjust this line.
+                    const parsedData = await window.pptxParser(file);
+
+                    // If the parser returns an object with a 'text' property or similar
+                    // or an array of slides with text.
+                    if (parsedData && Array.isArray(parsedData.slides)) {
+                        parsedData.slides.forEach((slide, index) => {
+                            const slideDiv = document.createElement('div');
+                            slideDiv.classList.add('slide-content');
+                            slideDiv.innerHTML = `<h2>Slide ${index + 1}</h2>`;
+                            if (slide.text && Array.isArray(slide.text)) {
+                                slide.text.forEach(paragraph => {
+                                    const p = document.createElement('p');
+                                    p.textContent = paragraph;
+                                    slideDiv.appendChild(p);
+                                });
+                            } else if (typeof slide.text === 'string') {
+                                const p = document.createElement('p');
+                                p.textContent = slide.text;
+                                slideDiv.appendChild(p);
+                            } else {
+                                const p = document.createElement('p');
+                                p.textContent = 'No text content found for this slide.';
+                                slideDiv.appendChild(p);
+                            }
+                            outputDiv.appendChild(slideDiv);
+                        });
+                    } else if (parsedData && parsedData.text) {
+                        // If the parser returns just a single string of all text
+                        const p = document.createElement('p');
+                        p.textContent = parsedData.text;
+                        outputDiv.appendChild(p);
+                    } else {
+                        outputDiv.innerHTML = '<p>No recognizable content parsed from the PPTX file.</p>';
+                    }
+
+                } catch (error) {
+                    console.error('Error parsing PPTX:', error);
+                    errorMessage.textContent = `Error parsing file: ${error.message || error}`;
+                    errorMessage.style.display = 'block';
+                } finally {
+                    loadingMessage.style.display = 'none';
+                    parseButton.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
